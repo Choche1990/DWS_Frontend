@@ -1,0 +1,1 @@
+import{j as o}from"./index-CH10oYab.js";import{L as t}from"./legacy-dashboard-frame-CROSNYzG.js";import"./charts-BLJCx9fU.js";function e(){return o.jsx(t,{title:"Dashboard Autoatención IA",src:"/modules/AutoatencionIA/AutoatencionIA.dc.html"})}export{e as component};

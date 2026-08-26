@@ -1,0 +1,1 @@
+import{j as t}from"./index-CH10oYab.js";import{L as o}from"./legacy-dashboard-frame-CROSNYzG.js";import"./charts-BLJCx9fU.js";function e(){return t.jsx(o,{title:"Planificador Gantt de proyectos",src:"/modules/Gantt/gantt.html"})}export{e as component};

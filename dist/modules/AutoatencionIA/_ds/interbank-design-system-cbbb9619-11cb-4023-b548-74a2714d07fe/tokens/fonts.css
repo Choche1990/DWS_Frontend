@@ -1,0 +1,30 @@
+/* Poppins — primary typeface. Regular & SemiBold are self-hosted from the
+   brand's own files (uploads/Poppins-*.ttf). Light & Bold complete the
+   4-weight family the manual specifies (Light/Regular/SemiBold/Bold) via
+   Google Fonts — same foundry family, not a substitution. */
+
+@font-face {
+  font-family: "Poppins";
+  src: url("../assets/fonts/Poppins-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("../assets/fonts/Poppins-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;700&display=swap");
+
+/* Email-only typeface — never used outside mailings/Verdana-specific pieces. */
+@font-face {
+  font-family: "Verdana";
+  src: local("Verdana");
+  font-weight: 400 700;
+  font-style: normal;
+}

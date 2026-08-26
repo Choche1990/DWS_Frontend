@@ -1,0 +1,1 @@
+import{j as r,O as o}from"./index-CH10oYab.js";import{P as s,A as t}from"./process-mining-shell-BKxm1dpp.js";import"./charts-BLJCx9fU.js";function p(){return r.jsx(s,{children:r.jsx(t,{children:r.jsx(o,{})})})}export{p as component};
