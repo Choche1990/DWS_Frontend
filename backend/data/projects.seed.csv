@@ -1,0 +1,11 @@
+﻿id,nombre,descripcion,periodo,estado,asignado,solicitante,complejidad,score,fechaSolicitud,inicio,fin,finReal,tituloEjecutivo,descripcionEjecutiva,objetivo,prioridad,naDinero,monedaDinero,dineroAntes,dineroDespues,naTiempo,ahorroTiempoAntes,ahorroTiempoDespues,naFTE,ahorroFTE,equiposInvolucrados,procesoEtapas,proximosPasos,riesgos,extra,createdAt,updatedAt
+1,Segmentación de clientes retail,,Q1,En proceso,Anyela,SmartDesk,Alta,4,,2026-01-08,2026-03-20,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+2,Modelo de churn tarjetas,,Q1,Completado,Jean Pierre,SmartDesk,Alta,5,,2026-01-15,2026-02-28,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+3,Automatización de reportes PMO,,Q1,En proceso,Camila,PMO,Baja,3,,2026-02-01,2026-03-15,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+4,Encuesta NPS analytics,,Q1,Completado,Anyela,Care,Baja,2,,2026-01-10,2026-02-10,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+5,Data quality framework,,Q2,En proceso,Jean Pierre,DataLab,Media,3,,2026-04-05,2026-06-10,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+6,Dashboard comercial regional,,Q2,En backlog,Camila,PMO,Media,4,,2026-04-01,2026-05-30,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+7,Scoring de riesgo PYME,,Q2,En backlog,Jean Pierre,Seguridad,Alta,4,,2026-04-10,2026-06-25,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+8,Motor de recomendación,,Q3,En backlog,Anyela,SmartDesk,Alta,5,,2026-07-01,2026-09-20,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+9,Pipeline datos transaccionales,,Q3,En backlog,Camila,DataLab,Alta,4,,2026-07-15,2026-09-30,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z
+10,Optimización de campañas,,Q4,En backlog,Anyela,SmartDesk,Media,3,,2026-10-01,2026-11-30,,,,,,false,,,,false,,,false,,[],[],[],[],{},2026-08-26T02:47:30.446Z,2026-08-26T02:47:30.446Z

@@ -4,7 +4,11 @@ const fs = require('fs');
 
 const path = require('path');
 
- 
+const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore');
+
+ensureDataFiles();
+
+
 
 // Puerto por el que se accederá al frontend
 
@@ -57,6 +61,84 @@ const mimeTypes = {
  
 
 const server = http.createServer((req, res) => {
+
+  // --- API del Gantt (datos compartidos en CSV) — debe ir antes de servir estáticos ---
+
+  const apiPath = req.url.split('?')[0];
+
+  if (apiPath === '/api/gantt' && req.method === 'GET') {
+
+    try {
+
+      const data = loadGantt();
+
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+
+      res.end(JSON.stringify(data));
+
+    } catch (error) {
+
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+
+      res.end(JSON.stringify({ error: 'gantt_load_failed', message: String((error && error.message) || error) }));
+
+    }
+
+    return;
+
+  }
+
+  if (apiPath === '/api/gantt' && req.method === 'POST') {
+
+    const chunks = [];
+
+    req.on('data', (chunk) => chunks.push(chunk));
+
+    req.on('end', () => {
+
+      try {
+
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}');
+
+        if (!body || !Array.isArray(body.projects)) {
+
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+
+          res.end(JSON.stringify({ error: 'invalid_body' }));
+
+          return;
+
+        }
+
+        saveGantt(body);
+
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+
+        res.end(JSON.stringify({ ok: true }));
+
+      } catch (error) {
+
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+
+        res.end(JSON.stringify({ error: 'gantt_save_failed', message: String((error && error.message) || error) }));
+
+      }
+
+    });
+
+    req.on('error', () => {
+
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+
+      res.end(JSON.stringify({ error: 'request_error' }));
+
+    });
+
+    return;
+
+  }
+
+  // --- fin API del Gantt ---
 
   // Limpiar parámetros de consulta de la URL (Query params)
 

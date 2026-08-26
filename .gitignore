@@ -1,0 +1,7 @@
+node_modules/
+
+# Datos reales del Gantt (se generan en la PC servidor a partir de los .seed.csv).
+# Se ignoran para que un futuro `git pull` nunca sobreescriba datos ya cargados.
+backend/data/projects.csv
+backend/data/tasks.csv
+backend/data/*.tmp-*
