@@ -1,0 +1,4 @@
+email,password,nombre,rol,grupo,modulos
+admin@empresa.com,cambiar123,Administrador,admin,,*
+analista1@empresa.com,cambiar123,Anyela,analista,,gantt
+coordinador1@empresa.com,cambiar123,Jean Pierre,coordinador,datalab,gantt

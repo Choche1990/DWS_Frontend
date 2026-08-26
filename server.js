@@ -5,8 +5,10 @@ const fs = require('fs');
 const path = require('path');
 
 const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore');
+const { ensureUsersFile, findUser } = require('./backend/usersStore');
 
 ensureDataFiles();
+ensureUsersFile();
 
 
 
@@ -137,6 +139,60 @@ const server = http.createServer((req, res) => {
     return;
 
   }
+
+  // --- API de login (control de accesos, valida contra backend/data/users.csv) ---
+
+  if (apiPath === '/api/login' && req.method === 'POST') {
+
+    const loginChunks = [];
+
+    req.on('data', (chunk) => loginChunks.push(chunk));
+
+    req.on('end', () => {
+
+      try {
+
+        const body = JSON.parse(Buffer.concat(loginChunks).toString('utf-8') || '{}');
+
+        const user = findUser(body.email, body.password);
+
+        if (user) {
+
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+
+          res.end(JSON.stringify({ ok: true, user }));
+
+        } else {
+
+          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
+
+          res.end(JSON.stringify({ ok: false, error: 'invalid_credentials' }));
+
+        }
+
+      } catch (error) {
+
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+
+        res.end(JSON.stringify({ error: 'login_failed', message: String((error && error.message) || error) }));
+
+      }
+
+    });
+
+    req.on('error', () => {
+
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+
+      res.end(JSON.stringify({ error: 'request_error' }));
+
+    });
+
+    return;
+
+  }
+
+  // --- fin API de login ---
 
   // --- fin API del Gantt ---
 

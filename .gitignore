@@ -4,4 +4,5 @@ node_modules/
 # Se ignoran para que un futuro `git pull` nunca sobreescriba datos ya cargados.
 backend/data/projects.csv
 backend/data/tasks.csv
+backend/data/users.csv
 backend/data/*.tmp-*
