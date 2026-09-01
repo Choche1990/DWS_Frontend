@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const { readCSVFile, writeCSVFileAtomic } = require('./csvStore');
+const { appendAudit } = require('./auditStore');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const PROJECTS_CSV = path.join(DATA_DIR, 'projects.csv');
@@ -45,7 +46,7 @@ const PROJECT_EXPLICIT_FIELDS = new Set(PROJECTS_HEADERS.filter((f) => f !== 'ex
 
 const TASKS_HEADERS = [
   'projectId', 'id', 'nombre', 'peso', 'inicio', 'fin', 'asignado', 'avance',
-  'comentario', 'createdAt', 'updatedAt',
+  'comentario', 'createdByEmail', 'dateSetupUntil', 'createdAt', 'updatedAt',
 ];
 
 function ensureDataFiles() {
@@ -91,6 +92,8 @@ function rowToTask(row) {
     asignado: row.asignado || '',
     avance: row.avance === '' || row.avance === undefined ? 0 : Number(row.avance),
     comentario: row.comentario || '',
+    createdByEmail: row.createdByEmail || '',
+    dateSetupUntil: row.dateSetupUntil || '',
   };
 }
 
@@ -150,12 +153,14 @@ function taskToRow(projectId, task, previousByKey, now) {
     asignado: task.asignado !== undefined ? task.asignado : '',
     avance: task.avance !== undefined ? task.avance : '',
     comentario: task.comentario !== undefined ? task.comentario : '',
+    createdByEmail: (prev && prev.createdByEmail) || task.createdByEmail || '',
+    dateSetupUntil: (prev && prev.dateSetupUntil) || task.dateSetupUntil || '',
     createdAt: (prev && prev.createdAt) || now,
     updatedAt: now,
   };
 }
 
-function saveGantt({ projects }) {
+function saveGantt({ projects, actorRole, actorEmail, actorName }) {
   const now = new Date().toISOString();
 
   const prevProjectsCsv = readCSVFile(PROJECTS_CSV);
@@ -164,19 +169,99 @@ function saveGantt({ projects }) {
   const previousProjectsById = new Map(prevProjectsCsv.rows.map((r) => [Number(r.id), r]));
   const previousTasksByKey = new Map(prevTasksCsv.rows.map((r) => [r.projectId + '::' + r.id, r]));
 
+  // Solo coordinadores y administradores pueden eliminar. La misma regla se
+  // valida aqui para no depender exclusivamente del boton de la interfaz.
+  const normalizedRole = String(actorRole || '').trim().toLowerCase();
+  const canDelete = normalizedRole === 'admin' || normalizedRole === 'coordinador';
+  const canManageDates = canDelete;
+  const incomingProjectIds = new Set(projects.map((p) => Number(p.id)));
+  for (const previous of prevProjectsCsv.rows) {
+    if (!canDelete && !incomingProjectIds.has(Number(previous.id))) {
+      throw new Error('project_deletion_not_allowed');
+    }
+  }
+  const incomingTaskKeys = new Set();
+  for (const project of projects) {
+    for (const task of (Array.isArray(project.tareas) ? project.tareas : [])) {
+      incomingTaskKeys.add(String(project.id) + '::' + String(task.id));
+    }
+  }
+  for (const previous of prevTasksCsv.rows) {
+    const key = String(previous.projectId) + '::' + String(previous.id);
+    if (!canDelete && !incomingTaskKeys.has(key)) throw new Error('task_deletion_not_allowed');
+  }
+
   const projectRows = [];
   const taskRows = [];
+  const auditEntries = [];
 
   for (const project of projects) {
-    projectRows.push(projectToRow(project, previousProjectsById, now));
+    const previousProject = previousProjectsById.get(Number(project.id));
+    if (previousProject && !canManageDates) {
+      const previousExtra = safeJsonParse(previousProject.extra, {});
+      const isCreationDraft = previousExtra.createdByEmail &&
+        String(previousExtra.createdByEmail).toLowerCase() === String(actorEmail || '').toLowerCase() &&
+        String(previousProject.nombre || '').trim() === 'Nuevo proyecto';
+      if (!isCreationDraft) {
+        project.inicio = previousProject.inicio || '';
+        project.fin = previousProject.fin || '';
+        project.fechaSolicitud = previousProject.fechaSolicitud || '';
+        project.finReal = previousProject.finReal || '';
+      }
+    }
+    const projectRow = projectToRow(project, previousProjectsById, now);
+    projectRows.push(projectRow);
+    if (!previousProject) {
+      auditEntries.push({ action: 'CREATE', entityType: 'project', entityId: project.id, projectId: project.id, newValue: project.nombre || '' });
+    } else {
+      for (const field of PROJECTS_HEADERS) {
+        if (field === 'createdAt' || field === 'updatedAt' || field === 'extra') continue;
+        if (String(previousProject[field] || '') !== String(projectRow[field] || '')) {
+          auditEntries.push({ action: 'UPDATE', entityType: 'project', entityId: project.id, projectId: project.id, field, oldValue: previousProject[field], newValue: projectRow[field] });
+        }
+      }
+    }
     const tareas = Array.isArray(project.tareas) ? project.tareas : [];
     for (const task of tareas) {
-      taskRows.push(taskToRow(project.id, task, previousTasksByKey, now));
+      const taskKey = String(project.id) + '::' + String(task.id);
+      const previousTask = previousTasksByKey.get(taskKey);
+      if (previousTask && !canManageDates) {
+        const isCreationDraft = previousTask.createdByEmail &&
+          String(previousTask.createdByEmail).toLowerCase() === String(actorEmail || '').toLowerCase() &&
+          String(previousTask.nombre || '').trim() === 'Nueva tarea';
+        if (!isCreationDraft) {
+          task.inicio = previousTask.inicio || '';
+          task.fin = previousTask.fin || '';
+        }
+      }
+      const taskRow = taskToRow(project.id, task, previousTasksByKey, now);
+      taskRows.push(taskRow);
+      if (!previousTask) {
+        auditEntries.push({ action: 'CREATE', entityType: 'project_task', entityId: task.id, projectId: project.id, newValue: task.nombre || '' });
+      } else {
+        for (const field of TASKS_HEADERS) {
+          if (['projectId', 'id', 'createdAt', 'updatedAt', 'createdByEmail', 'dateSetupUntil'].includes(field)) continue;
+          if (String(previousTask[field] || '') !== String(taskRow[field] || '')) {
+            auditEntries.push({ action: 'UPDATE', entityType: 'project_task', entityId: task.id, projectId: project.id, field, oldValue: previousTask[field], newValue: taskRow[field] });
+          }
+        }
+      }
+    }
+  }
+
+  for (const previous of prevProjectsCsv.rows) {
+    if (!incomingProjectIds.has(Number(previous.id))) auditEntries.push({ action: 'DELETE', entityType: 'project', entityId: previous.id, projectId: previous.id, oldValue: previous.nombre || '' });
+  }
+  for (const previous of prevTasksCsv.rows) {
+    const key = String(previous.projectId) + '::' + String(previous.id);
+    if (!incomingTaskKeys.has(key) && incomingProjectIds.has(Number(previous.projectId))) {
+      auditEntries.push({ action: 'DELETE', entityType: 'project_task', entityId: previous.id, projectId: previous.projectId, oldValue: previous.nombre || '' });
     }
   }
 
   writeCSVFileAtomic(PROJECTS_CSV, PROJECTS_HEADERS, projectRows);
   writeCSVFileAtomic(TASKS_CSV, TASKS_HEADERS, taskRows);
+  appendAudit(auditEntries, { email: actorEmail, name: actorName, role: normalizedRole });
 }
 
 module.exports = { ensureDataFiles, loadGantt, saveGantt };

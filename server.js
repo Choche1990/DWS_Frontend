@@ -6,9 +6,13 @@ const path = require('path');
 
 const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore');
 const { ensureUsersFile, findUser } = require('./backend/usersStore');
+const { ensureIndependentTasksFile, loadIndependentTasks, saveIndependentTasks, upsertIndependentTask, deleteIndependentTask } = require('./backend/independentTasksStore');
+const { ensureAuditFile, loadProjectHistory } = require('./backend/auditStore');
 
 ensureDataFiles();
 ensureUsersFile();
+ensureIndependentTasksFile();
+ensureAuditFile();
 
 
 
@@ -138,6 +142,77 @@ const server = http.createServer((req, res) => {
 
     return;
 
+  }
+
+  if (apiPath === '/api/independent-tasks' && req.method === 'GET') {
+    try {
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify(loadIndependentTasks()));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'independent_tasks_load_failed', message: String(error.message || error) }));
+    }
+    return;
+  }
+
+  if (apiPath === '/api/independent-tasks' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}');
+        if (!body || !Array.isArray(body.tasks)) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'invalid_body' }));
+          return;
+        }
+        const saved = saveIndependentTasks(body);
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: true, ...saved }));
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'independent_tasks_save_failed', message: String(error.message || error) }));
+      }
+    });
+    return;
+  }
+
+  if (apiPath === '/api/independent-task' && (req.method === 'POST' || req.method === 'DELETE')) {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}');
+        const saved = req.method === 'DELETE'
+          ? deleteIndependentTask({ id: body.id, actor: body.actor || {} })
+          : upsertIndependentTask({ task: body.task, actor: body.actor || {} });
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ ok: true, ...saved }));
+      } catch (error) {
+        const forbidden = String(error.message || error).includes('not_allowed');
+        res.writeHead(forbidden ? 403 : 400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'independent_task_write_failed', message: String(error.message || error) }));
+      }
+    });
+    return;
+  }
+
+  if (apiPath === '/api/project-history' && req.method === 'GET') {
+    try {
+      const requestUrl = new URL(req.url, 'http://localhost');
+      const projectId = requestUrl.searchParams.get('projectId');
+      if (!projectId) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'project_id_required' }));
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ history: loadProjectHistory(projectId) }));
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'history_load_failed', message: String(error.message || error) }));
+    }
+    return;
   }
 
   // --- API de login (control de accesos, valida contra backend/data/users.csv) ---

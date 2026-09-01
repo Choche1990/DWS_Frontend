@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="/legacy-theme.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/tokens/spacing.css">
+  <link rel="stylesheet" href="_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/styles.css">
+  <script src="_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/_ds_bundle.js"></script>
+  <style>
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes drawerIn { from { transform:translateX(100%); } to { transform:translateX(0); } }
+    body { margin:0; background:var(--ibk-gray-05); font-family:'Poppins', sans-serif; }
+    a { color:var(--text-link); }
+    a:hover { color:var(--text-link-hover); }
+    ::-webkit-scrollbar { width:8px; height:8px; }
+    ::-webkit-scrollbar-thumb { background:var(--ibk-gray-30); border-radius:8px; }
+  </style>
+</helmet>
+
+<div style="min-height:100vh; display:flex; flex-direction:column; background:var(--ibk-gray-05); color:var(--ibk-black);">
+
+  <!-- Header -->
+  <header style="padding:28px 40px 20px; background:var(--ibk-white); border-bottom:1px solid var(--border-default);">
+    <div style="display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h1 style="margin:0; font-size:30px; font-weight:700; font-family:'Poppins',sans-serif; letter-spacing:-0.3px;">Evolución de la Autoatención IA</h1>
+        <p style="margin:4px 0 0; font-size:15px; color:var(--text-secondary); font-weight:500;">Enero – Mayo</p>
+      </div>
+      <div style="font-size:12px; color:var(--text-secondary); text-align:right;">
+        <div style="font-weight:600; color:var(--ibk-green-4);">Interbank</div>
+        <div>Panel ejecutivo</div>
+      </div>
+    </div>
+  </header>
+
+  <div style="flex:1; display:flex; min-height:0;">
+    <!-- Sidebar nav -->
+    <aside style="width:230px; flex-shrink:0; background:var(--ibk-white); border-right:1px solid var(--border-default); padding:20px 0; display:flex; flex-direction:column; gap:2px;">
+      <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="3">
+        <button onClick="{{ tab.onClick }}" style="{{ tab.style }}">{{ tab.label }}</button>
+      </sc-for>
+    </aside>
+
+    <div style="flex:1; display:flex; flex-direction:column; min-width:0;">
+      <!-- Filter bar -->
+      <div style="padding:16px 40px; background:var(--ibk-white); border-bottom:1px solid var(--border-default); display:flex; gap:20px; flex-wrap:wrap; align-items:flex-end; position:sticky; top:0; z-index:20;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Roadmap</label>
+          <select value="{{ filterRoadmap }}" onChange="{{ onChangeRoadmapFilter }}" style="height:36px; min-width:150px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; background:var(--ibk-white);">
+            <sc-for list="{{ roadmapSelectOptions }}" as="o" hint-placeholder-count="5">
+              <option value="{{ o }}">{{ o }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Responsable</label>
+          <select value="{{ filterResponsable }}" onChange="{{ onChangeResponsableFilter }}" style="height:36px; min-width:170px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; background:var(--ibk-white);">
+            <sc-for list="{{ responsableSelectOptions }}" as="o" hint-placeholder-count="5">
+              <option value="{{ o }}">{{ o }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Filtro IA</label>
+          <select value="{{ filterFiltroIA }}" onChange="{{ onChangeFiltroIAFilter }}" style="height:36px; min-width:190px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-weight:600; font-family:'Poppins',sans-serif; background:var(--ibk-white);">
+            <sc-for list="{{ filtroIASelectOptions }}" as="o" hint-placeholder-count="7">
+              <option value="{{ o }}">{{ o }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <button onClick="{{ resetFilters }}" style="margin-left:auto; height:36px; padding:0 16px; border-radius:999px; border:1px solid var(--border-strong); background:var(--ibk-white); color:var(--text-secondary); font-size:13px; font-weight:600; cursor:pointer;">Restablecer filtros</button>
+      </div>
+
+      <main style="flex:1; padding:32px 40px 60px; box-sizing:border-box;">
+
+    <!-- ===== TAB 1: RESUMEN EJECUTIVO ===== -->
+    <sc-if value="{{ isResumen }}" hint-placeholder-val="{{ true }}">
+      <section style="display:flex; flex-direction:column; gap:32px;">
+
+        <!-- KPI cards -->
+        <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+          <div style="background:var(--ibk-white); border-radius:16px; padding:20px 22px; box-shadow:0 4px 20px rgba(0,0,0,0.06); animation:fadeUp .3s ease;">
+            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Promedio mensual</div>
+            <div style="font-size:32px; font-weight:700; margin-top:8px; color:var(--ibk-black);">{{ kpiPromedioDisplay }}</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">tickets / mes</div>
+          </div>
+          <div style="background:var(--ibk-white); border-radius:16px; padding:20px 22px; box-shadow:0 4px 20px rgba(0,0,0,0.06); animation:fadeUp .35s ease;">
+            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">% del total</div>
+            <div style="font-size:32px; font-weight:700; margin-top:8px; color:var(--ibk-green-4);">{{ kpiPctDisplay }}%</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">respecto al promedio mensual global</div>
+          </div>
+          <div style="background:var(--ibk-white); border-radius:16px; padding:20px 22px; box-shadow:0 4px 20px rgba(0,0,0,0.06); animation:fadeUp .4s ease;">
+            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Categorías</div>
+            <div style="font-size:32px; font-weight:700; margin-top:8px; color:var(--ibk-black);">{{ kpiCategoriasDisplay }}</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">activas con el filtro actual</div>
+          </div>
+          <div style="background:var(--ibk-white); border-radius:16px; padding:20px 22px; box-shadow:0 4px 20px rgba(0,0,0,0.06); animation:fadeUp .45s ease;">
+            <div style="font-size:12px; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.4px;">Estado</div>
+            <div style="font-size:20px; font-weight:700; margin-top:10px; color:{{ kpiEstadoColor }};">{{ kpiEstadoLabel }}</div>
+            <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">{{ kpiEstadoDetalle }}</div>
+          </div>
+        </div>
+
+        <!-- Roadmap timeline -->
+        <div>
+          <h2 style="font-size:17px; font-weight:700; margin:0 0 16px;">Roadmap</h2>
+          <div style="position:relative; display:grid; grid-template-columns:repeat(4,1fr); gap:16px;">
+            <div style="position:absolute; top:34px; left:6%; right:6%; height:2px; background:var(--border-default); z-index:0;"></div>
+            <sc-for list="{{ roadmap }}" as="f" hint-placeholder-count="4">
+              <div style="{{ f.cardStyle }}">
+                <div style="display:flex; align-items:center; gap:10px;">
+                  <div style="{{ f.badgeStyle }}">{{ f.numeral }}</div>
+                  <div style="font-size:14px; font-weight:700;">{{ f.nombre }}</div>
+                </div>
+                <div style="margin-top:14px; font-size:22px; font-weight:700;">{{ f.promedioDisplay }}</div>
+                <div style="font-size:12px; color:var(--text-secondary); margin-top:2px;">promedio mensual · {{ f.pct }}%</div>
+                <div style="{{ f.estadoChipStyle }}">{{ f.estadoLabel }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- Distribución por Responsable + Filtro IA -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:stretch;">
+          <div style="background:var(--ibk-white); border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.06); min-height:320px; display:flex; flex-direction:column;">
+            <h2 style="font-size:16px; font-weight:700; margin:0 0 18px;">Distribución por Responsable</h2>
+            <div style="display:flex; flex-direction:column; gap:16px;">
+              <sc-for list="{{ responsableBars }}" as="b" hint-placeholder-count="4">
+                <div style="position:relative;" onMouseEnter="{{ b.onEnter }}" onMouseLeave="{{ b.onLeave }}">
+                  <div style="display:flex; flex-direction:column; gap:2px; font-size:13px; margin-bottom:6px;">
+                    <span style="font-weight:700;">{{ b.label }}</span>
+                    <span style="color:var(--text-secondary); font-size:12px;">{{ b.pct }}% · {{ b.promedioDisplay }} ticket/mes</span>
+                  </div>
+                  <div style="height:14px; background:var(--ibk-gray-05); border-radius:8px; overflow:hidden;">
+                    <div style="{{ b.fillStyle }}"></div>
+                  </div>
+                  <sc-if value="{{ b.hovered }}" hint-placeholder-val="{{ false }}">
+                    <div style="position:absolute; top:-38px; left:0; background:var(--ibk-black); color:#fff; font-size:12px; padding:6px 10px; border-radius:8px; white-space:nowrap; z-index:5;">{{ b.tooltip }}</div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--ibk-white); border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.06); min-height:320px; display:flex; flex-direction:column;">
+            <h2 style="font-size:16px; font-weight:700; margin:0 0 12px;">Distribución por Filtro IA</h2>
+            <div style="display:flex; align-items:center; gap:14px; flex:1; min-width:0; position:relative;">
+              <div style="position:relative; width:140px; height:140px; flex-shrink:0;" onMouseEnter="{{ onCenterEnter }}" onMouseLeave="{{ onCenterLeave }}">
+                <svg width="140" height="140" viewBox="0 0 140 140">
+                  <sc-for list="{{ donutSegments }}" as="seg" hint-placeholder-count="4">
+                    <circle cx="70" cy="70" r="52" fill="none" stroke="{{ seg.color }}" stroke-width="26"
+                      stroke-dasharray="{{ seg.dashArray }}" stroke-dashoffset="{{ seg.dashOffset }}"
+                      transform="rotate(-90 70 70)" onMouseEnter="{{ seg.onEnter }}" onMouseLeave="{{ seg.onLeave }}"
+                      style="cursor:pointer; transition:opacity .15s;" opacity="{{ seg.opacity }}"></circle>
+                  </sc-for>
+                </svg>
+                <div style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; pointer-events:none; cursor:pointer;">
+                  <span style="font-size:11px; color:var(--text-secondary);">Promedio</span>
+                  <span style="font-size:15px; font-weight:700; color:var(--ibk-black);">{{ donutCenterLabel }}</span>
+                </div>
+                <sc-if value="{{ centerHovered }}" hint-placeholder-val="{{ false }}">
+                  <div style="position:absolute; top:-6px; left:50%; transform:translate(-50%,-100%); background:var(--ibk-black); color:#fff; font-size:12px; padding:6px 10px; border-radius:8px; white-space:nowrap; z-index:5;">{{ centerTooltip }}</div>
+                </sc-if>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:0;">
+                <sc-for list="{{ donutSegments }}" as="seg" hint-placeholder-count="6">
+                  <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; cursor:pointer;" onMouseEnter="{{ seg.onEnter }}" onMouseLeave="{{ seg.onLeave }}" onClick="{{ seg.onClick }}">
+                    <span style="width:8px; height:8px; border-radius:50%; background:{{ seg.color }}; flex-shrink:0;"></span>
+                    <span style="font-weight:600; flex:1; min-width:0;">{{ seg.label }}</span>
+                    <span style="color:var(--text-secondary); flex-shrink:0;">{{ seg.pct }}%</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- ===== TAB 2: DETALLE ===== -->
+    <sc-if value="{{ isDetalle }}" hint-placeholder-val="{{ false }}">
+      <section style="display:flex; flex-direction:column; gap:32px;">
+        <div>
+          <h2 style="font-size:17px; font-weight:700; margin:0 0 4px;">Detalle por categorías</h2>
+          <p style="font-size:13px; color:var(--text-secondary); margin:0 0 18px;">Haz clic en la barra de cronograma para editar una categoría.</p>
+          <div style="background:var(--ibk-white); border-radius:16px; padding:8px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+            <sc-for list="{{ detalle }}" as="c" hint-placeholder-count="8">
+              <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:20px; align-items:center; padding:14px 0; border-bottom:1px solid var(--border-default);">
+                <div>
+                  <div style="font-size:13px; font-weight:700;">{{ c.name }}</div>
+                  <div style="font-size:11px; color:var(--ibk-gray-50); margin-top:2px;">{{ c.subtext }}</div>
+                  <div style="margin-top:8px; height:10px; background:var(--ibk-gray-05); border-radius:6px; overflow:hidden;">
+                    <div style="{{ c.barStyle }}"></div>
+                  </div>
+                  <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">{{ c.promedioDisplay }}/mes · {{ c.pct }}% del total filtrado</div>
+                </div>
+                <div style="cursor:pointer;" onClick="{{ c.onOpen }}">
+                  <div style="position:relative; height:22px; background:var(--ibk-gray-05); border-radius:6px; overflow:hidden;">
+                    <div style="{{ c.ganttStyle }}"></div>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; margin-top:4px;">
+                    <span style="font-size:11px; color:var(--ibk-gray-50);">{{ c.fechaInicio }}</span>
+                    <span style="{{ c.estadoChipStyle }}">{{ c.estadoLabel }}</span>
+                  </div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <!-- Sección 6: avance contractual vs real -->
+        <div style="background:var(--ibk-white); border-radius:16px; padding:24px; box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+          <h2 style="font-size:16px; font-weight:700; margin:0 0 4px;">Avance contractual vs. avance real</h2>
+          <p style="font-size:12px; color:var(--text-secondary); margin:0 0 18px;">Cada año va de julio a julio.</p>
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px;">
+            <div style="background:var(--ibk-gray-05); border-radius:12px; padding:14px 16px;">
+              <div style="font-size:11px; color:var(--text-secondary); font-weight:600;">Avance contractual</div>
+              <div style="font-size:22px; font-weight:700; margin-top:4px;">{{ avanceContractualKpi }}%</div>
+            </div>
+            <div style="background:var(--ibk-gray-05); border-radius:12px; padding:14px 16px;">
+              <div style="font-size:11px; color:var(--text-secondary); font-weight:600;">Avance real</div>
+              <div style="font-size:22px; font-weight:700; margin-top:4px; color:var(--ibk-green-4);">{{ avanceRealKpi }}%</div>
+            </div>
+            <div style="background:var(--ibk-gray-05); border-radius:12px; padding:14px 16px;">
+              <div style="font-size:11px; color:var(--text-secondary); font-weight:600;">Brecha</div>
+              <div style="font-size:22px; font-weight:700; margin-top:4px; color:{{ brechaColor }};">{{ brechaKpi }}%</div>
+            </div>
+            <div style="background:var(--ibk-gray-05); border-radius:12px; padding:14px 16px;">
+              <div style="font-size:11px; color:var(--text-secondary); font-weight:600;">Categorías completadas</div>
+              <div style="font-size:22px; font-weight:700; margin-top:4px;">{{ categoriasCompletadasKpi }}</div>
+            </div>
+          </div>
+          <div style="position:relative;">
+            <svg width="100%" height="220" viewBox="0 0 800 220" preserveAspectRatio="none" style="overflow:visible;">
+              <sc-for list="{{ chartGridLines }}" as="gl" hint-placeholder-count="5">
+                <line x1="0" x2="800" y1="{{ gl.y }}" y2="{{ gl.y }}" stroke="var(--border-default)" stroke-width="1"></line>
+              </sc-for>
+              <path d="{{ contractualPath }}" fill="none" stroke="var(--ibk-gray-50)" stroke-width="2.5" stroke-dasharray="6 5"></path>
+              <path d="{{ realPath }}" fill="none" stroke="var(--ibk-green-4)" stroke-width="3"></path>
+              <sc-for list="{{ linePoints }}" as="p" hint-placeholder-count="4">
+                <g onMouseEnter="{{ p.onEnter }}" onMouseLeave="{{ p.onLeave }}" style="cursor:pointer;">
+                  <circle cx="{{ p.x }}" cy="{{ p.objY }}" r="5" fill="var(--ibk-gray-50)"></circle>
+                  <sc-if value="{{ p.hasReal }}" hint-placeholder-val="{{ false }}">
+                    <circle cx="{{ p.x }}" cy="{{ p.realY }}" r="5" fill="var(--ibk-green-4)"></circle>
+                  </sc-if>
+                  <rect x="{{ p.hitX }}" y="0" width="120" height="220" fill="transparent"></rect>
+                </g>
+              </sc-for>
+            </svg>
+            <sc-for list="{{ chartLabels }}" as="lbl" hint-placeholder-count="8">
+              <div style="{{ lbl.style }}">{{ lbl.text }}</div>
+            </sc-for>
+            <div style="display:flex; justify-content:space-around; font-size:12px; color:var(--text-secondary); font-weight:600; margin-top:4px;">
+              <sc-for list="{{ linePoints }}" as="p" hint-placeholder-count="4">
+                <span>{{ p.anio }}</span>
+              </sc-for>
+            </div>
+            <sc-if value="{{ hoveredPoint }}" hint-placeholder-val="{{ false }}">
+              <div style="{{ hoveredPointStyle }}">{{ hoveredPointLabel }}</div>
+            </sc-if>
+          </div>
+        </div>
+      </section>
+    </sc-if>
+
+    <!-- ===== TAB 3: DISTRIBUCIÓN ===== -->
+    <sc-if value="{{ isDistribucion }}" hint-placeholder-val="{{ false }}">
+      <section style="display:flex; flex-direction:column; gap:20px;">
+        <h2 style="font-size:17px; font-weight:700; margin:0;">Distribución detallada</h2>
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <sc-for list="{{ distribucionGroups }}" as="g" hint-placeholder-count="3">
+            <div style="background:var(--ibk-white); border-radius:16px; padding:20px 24px; box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+              <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+                <h3 style="font-size:15px; font-weight:700; margin:0;">{{ g.label }}</h3>
+                <span style="font-size:12px; color:var(--text-secondary);">{{ g.totalDisplay }} tickets · {{ g.promedioDisplay }}/mes</span>
+              </div>
+              <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:10px;">
+                <sc-for list="{{ g.fases }}" as="f" hint-placeholder-count="4">
+                  <div style="{{ f.style }}">
+                    <div style="font-size:11px; font-weight:700; color:var(--text-secondary);">{{ f.nombre }}</div>
+                    <div style="font-size:18px; font-weight:700; margin-top:4px;">{{ f.pct }}%</div>
+                    <div style="font-size:11px; color:var(--text-secondary); margin-top:2px;">{{ f.totalDisplay }} · {{ f.filtroIA }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </sc-if>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Drawer -->
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; background:rgba(0,0,0,0.35); z-index:50;" onClick="{{ closeDrawer }}"></div>
+    <div style="position:fixed; top:0; right:0; height:100vh; width:380px; max-width:92vw; background:var(--ibk-white); box-shadow:-8px 0 30px rgba(0,0,0,0.15); z-index:51; animation:drawerIn .2s ease; display:flex; flex-direction:column;">
+      <div style="padding:22px 24px; border-bottom:1px solid var(--border-default); display:flex; justify-content:space-between; align-items:flex-start;">
+        <div>
+          <div style="font-size:11px; font-weight:600; color:var(--text-secondary); text-transform:uppercase;">Categoría</div>
+          <div style="font-size:16px; font-weight:700; margin-top:2px;">{{ drawerCat.name }}</div>
+        </div>
+        <button onClick="{{ closeDrawer }}" style="border:none; background:none; font-size:20px; cursor:pointer; color:var(--text-secondary); line-height:1;">×</button>
+      </div>
+      <div style="padding:22px 24px; display:flex; flex-direction:column; gap:16px; overflow-y:auto; flex:1;">
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <span style="font-size:12px; color:var(--text-secondary);">Roadmap</span>
+          <span style="font-size:13px; font-weight:600;">{{ drawerCat.faseNombre }}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <span style="font-size:12px; color:var(--text-secondary);">Responsable</span>
+          <span style="font-size:13px; font-weight:600;">{{ drawerCat.responsable }}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <span style="font-size:12px; color:var(--text-secondary);">Tipo IA</span>
+          <span style="font-size:13px; font-weight:600;">{{ drawerCat.filtroIA }}</span>
+        </div>
+        <hr style="border:none; border-top:1px solid var(--border-default); margin:4px 0;">
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">Estado</label>
+          <select value="{{ formEstado }}" onChange="{{ onChangeEstado }}" style="height:38px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-family:'Poppins',sans-serif;">
+            <sc-for list="{{ estadoOptions }}" as="eo" hint-placeholder-count="4">
+              <option value="{{ eo }}">{{ eo }}</option>
+            </sc-for>
+          </select>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">Fecha inicio</label>
+          <input type="date" value="{{ formFechaInicio }}" onChange="{{ onChangeFechaInicio }}" style="height:38px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-family:'Poppins',sans-serif;"></input>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">Fecha fin planificada</label>
+          <input type="date" value="{{ formFechaFinPlan }}" onChange="{{ onChangeFechaFinPlan }}" style="height:38px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-family:'Poppins',sans-serif;"></input>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">Fecha fin real</label>
+          <input type="date" value="{{ formFechaFinReal }}" onChange="{{ onChangeFechaFinReal }}" style="height:38px; border-radius:8px; border:1px solid var(--border-default); padding:0 10px; font-size:13px; font-family:'Poppins',sans-serif;"></input>
+        </div>
+      </div>
+      <div style="padding:18px 24px; border-top:1px solid var(--border-default); display:flex; gap:10px;">
+        <button onClick="{{ saveDrawer }}" style="flex:1; height:42px; border-radius:999px; border:none; background:var(--ibk-green); color:var(--ibk-black); font-weight:700; font-size:13px; cursor:pointer;">Guardar cambios</button>
+        <button onClick="{{ closeDrawer }}" style="flex:1; height:42px; border-radius:999px; border:1px solid var(--border-strong); background:var(--ibk-white); color:var(--text-secondary); font-weight:700; font-size:13px; cursor:pointer;">Cancelar</button>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    loaded: false,
+    categorias: [],
+    grandTotal: 1,
+    globalPromedioMensual: 1,
+    filterRoadmap: 'Todas',
+    filterResponsable: 'Todos',
+    filterFiltroIA: 'Todos',
+    activeTab: 'resumen',
+    hoveredBar: null,
+    hoveredSeg: null,
+    hoveredPointIdx: null,
+    centerHovered: false,
+    drawerOpen: false,
+    drawerCatId: null,
+    form: {},
+    kAnim: { promedio: 0, pct: 0, categorias: 0 },
+  };
+
+  async componentDidMount() {
+    const mod = await import('./data.js');
+    let categorias = mod.CATEGORIAS;
+    let edits = {};
+    try { edits = JSON.parse(localStorage.getItem('autoatencion-ia-edits-v2') || '{}'); } catch (e) {}
+    categorias = categorias.map(c => edits[c.id] ? { ...c, ...edits[c.id] } : c);
+    const grandTotal = categorias.reduce((a, c) => a + c.total, 0);
+    const globalPromedioMensual = categorias.reduce((a, c) => a + c.promedio, 0);
+    this.FASES = mod.FASES;
+    this.setState({ loaded: true, categorias, grandTotal, globalPromedioMensual }, () => this.animateKpis());
+  }
+
+  persistEdits() {
+    const edits = {};
+    this.state.categorias.forEach(c => {
+      edits[c.id] = { estado: c.estado, fechaInicio: c.fechaInicio, fechaFinPlan: c.fechaFinPlan, fechaFinReal: c.fechaFinReal };
+    });
+    localStorage.setItem('autoatencion-ia-edits-v2', JSON.stringify(edits));
+  }
+
+  animateKpis() {
+    const targets = this.computeKpiTargets();
+    const start = { ...this.state.kAnim };
+    const t0 = performance.now();
+    const dur = 500;
+    const step = () => {
+      const t = Math.min(1, (performance.now() - t0) / dur);
+      const ease = 1 - Math.pow(1 - t, 3);
+      this.setState({
+        kAnim: {
+          promedio: Math.round(start.promedio + (targets.promedio - start.promedio) * ease),
+          pct: Math.round((start.pct + (targets.pct - start.pct) * ease) * 10) / 10,
+          categorias: Math.round(start.categorias + (targets.categorias - start.categorias) * ease),
+        }
+      });
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  matchesFilters(c) {
+    if (this.state.filterRoadmap !== 'Todas' && c.fase !== this.state.filterRoadmap.replace('Fase ', '')) return false;
+    const r = this.state.filterResponsable;
+    if (r !== 'Todos') {
+      if (r === 'Canvia' && c.responsable !== 'Canvia') return false;
+      if (r === 'No Canvia' && c.responsable === 'Canvia') return false;
+      if (r === 'Autoatención' && c.responsable !== 'Autoatención') return false;
+      if (r === 'Shift-Left Nivel 3' && c.responsable !== 'Shift-Left Nivel 3') return false;
+    }
+    const fia = this.state.filterFiltroIA;
+    if (fia !== 'Todos' && c.filtroIA !== fia) return false;
+    return true;
+  }
+
+  computeKpiTargets() {
+    const filtered = this.state.categorias.filter(c => this.matchesFilters(c));
+    const promedio = filtered.reduce((a, c) => a + c.promedio, 0);
+    const pct = this.state.globalPromedioMensual ? (promedio / this.state.globalPromedioMensual) * 100 : 0;
+    return { promedio, pct, categorias: filtered.length };
+  }
+
+  fmt(n) { return Math.round(n).toLocaleString('es-PE'); }
+
+  setFilter(type, val) {
+    const key = type === 'roadmap' ? 'filterRoadmap' : (type === 'responsable' ? 'filterResponsable' : 'filterFiltroIA');
+    this.setState({ [key]: val }, () => this.animateKpis());
+  }
+  resetFilters() {
+    this.setState({ filterRoadmap: 'Todas', filterResponsable: 'Todos', filterFiltroIA: 'Todos' }, () => this.animateKpis());
+  }
+  setTab(tab) { this.setState({ activeTab: tab }); }
+
+  faseColor(id) {
+    const f = (this.FASES || []).find(x => x.id === id);
+    return f ? f.color : '#6B7280';
+  }
+  faseNombre(id) {
+    const f = (this.FASES || []).find(x => x.id === id);
+    return f ? f.nombre : id;
+  }
+  estadoColor(e) {
+    return e === 'Completada' ? 'var(--ibk-green-4)' : e === 'En implementación' ? 'var(--ibk-blue)' : e === 'Retrasada' ? 'var(--danger)' : 'var(--ibk-gray-50)';
+  }
+
+  openDrawer(catId) {
+    const cat = this.state.categorias.find(c => c.id === catId);
+    if (!cat) return;
+    this.setState({
+      drawerOpen: true, drawerCatId: catId,
+      form: { estado: cat.estado, fechaInicio: cat.fechaInicio, fechaFinPlan: cat.fechaFinPlan, fechaFinReal: cat.fechaFinReal || '' }
+    });
+  }
+  closeDrawer() { this.setState({ drawerOpen: false, drawerCatId: null }); }
+  updateForm(field, value) { this.setState({ form: { ...this.state.form, [field]: value } }); }
+  saveDrawer() {
+    const categorias = this.state.categorias.map(c => c.id === this.state.drawerCatId ? { ...c, ...this.state.form } : c);
+    this.setState({ categorias, drawerOpen: false }, () => { this.persistEdits(); this.animateKpis(); });
+  }
+
+  renderVals() {
+    if (!this.state.loaded) {
+      return { loaded: false, isResumen: true, isDetalle: false, isDistribucion: false,
+        roadmapOptions: [], responsableOptions: [], filtroIAOptions: [], tabs: [],
+        kpiPromedioDisplay: '…', kpiPctDisplay: '…', kpiCategoriasDisplay: '…',
+        kpiEstadoLabel: '', kpiEstadoColor: '', kpiEstadoDetalle: '',
+        roadmap: [], responsableBars: [], donutSegments: [], donutCenterLabel: '',
+        detalle: [], avanceContractualKpi: 0, avanceRealKpi: 0, brechaKpi: 0, brechaColor: '',
+        categoriasCompletadasKpi: '', chartGridLines: [], contractualPath: '', realPath: '', linePoints: [], chartLabels: [],
+        hoveredPoint: false, hoveredPointStyle: '', hoveredPointLabel: '', distribucionGroups: [],
+        drawerOpen: false, drawerCat: {}, formEstado: '', formFechaInicio: '', formFechaFinPlan: '', formFechaFinReal: '',
+        estadoOptions: [], onChangeEstado: () => {}, onChangeFechaInicio: () => {}, onChangeFechaFinPlan: () => {}, onChangeFechaFinReal: () => {},
+        saveDrawer: () => {}, closeDrawer: () => {}, resetFilters: () => {},
+        roadmapSelectOptions: [], responsableSelectOptions: [], filtroIASelectOptions: [],
+        filterRoadmap: 'Todas', filterResponsable: 'Todos', filterFiltroIA: 'Todos',
+        onChangeRoadmapFilter: () => {}, onChangeResponsableFilter: () => {}, onChangeFiltroIAFilter: () => {},
+        centerHovered: false, centerTooltip: '', onCenterEnter: () => {}, onCenterLeave: () => {} };
+    }
+
+    const S = this.state;
+    const filtered = S.categorias.filter(c => this.matchesFilters(c));
+    const totalFiltrado = filtered.reduce((a, c) => a + c.total, 0);
+
+    const roadmapDefs = [
+      { id: 'Todas', label: 'Todas' }, { id: 'I', label: 'Fase I' }, { id: 'II', label: 'Fase II' },
+      { id: 'III', label: 'Fase III' }, { id: 'IV', label: 'Fase IV' },
+    ];
+    const roadmapOptions = roadmapDefs.map(d => {
+      const active = S.filterRoadmap === d.label;
+      return {
+        label: d.label, onClick: () => this.setFilter('roadmap', d.label),
+        style: `height:32px;padding:0 14px;border-radius:999px;border:1px solid ${active ? 'var(--ibk-green-4)' : 'var(--border-default)'};background:${active ? 'var(--ibk-green-4)' : 'var(--ibk-white)'};color:${active ? '#fff' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer;`
+      };
+    });
+    const responsableDefs = ['Todos', 'Canvia', 'No Canvia', 'Autoatención', 'Shift-Left Nivel 3'];
+    const responsableOptions = responsableDefs.map(label => {
+      const active = S.filterResponsable === label;
+      return {
+        label, onClick: () => this.setFilter('responsable', label),
+        style: `height:32px;padding:0 14px;border-radius:999px;border:1px solid ${active ? 'var(--ibk-green-4)' : 'var(--border-default)'};background:${active ? 'var(--ibk-green-4)' : 'var(--ibk-white)'};color:${active ? '#fff' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer;`
+      };
+    });
+    const filtroIADefs = ['Todos', 'Automatización IA', 'Automatización Parcial', 'IA Derivación Directa', 'Agente Humano', 'Granulares', 'Categorías Cerradas'];
+    const filtroIAOptions = filtroIADefs.map(label => {
+      const active = S.filterFiltroIA === label;
+      return {
+        label, onClick: () => this.setFilter('filtroIA', label),
+        style: `height:32px;padding:0 14px;border-radius:999px;border:1px solid ${active ? 'var(--ibk-green-4)' : 'var(--border-default)'};background:${active ? 'var(--ibk-green-4)' : 'var(--ibk-white)'};color:${active ? '#fff' : 'var(--text-primary)'};font-size:12px;font-weight:600;cursor:pointer;`
+      };
+    });
+    const tabDefs = [{ id: 'resumen', label: 'Resumen Ejecutivo' }, { id: 'detalle', label: 'Detalle' }, { id: 'distribucion', label: 'Distribución' }];
+    const tabs = tabDefs.map(t => {
+      const active = S.activeTab === t.id;
+      return {
+        label: t.label, onClick: () => this.setTab(t.id),
+        style: `width:100%;text-align:left;padding:13px 24px;border:none;background:${active ? 'var(--ibk-gray-05)' : 'transparent'};font-size:14px;font-weight:${active ? 700 : 600};cursor:pointer;color:${active ? 'var(--ibk-green-4)' : 'var(--text-secondary)'};border-left:3px solid ${active ? 'var(--ibk-green-4)' : 'transparent'};transition:background .15s;font-family:'Poppins',sans-serif;`
+      };
+    });
+
+    // KPIs
+    const estadoRetrasadas = filtered.filter(c => c.estado === 'Retrasada').length;
+    const estadoCompletadas = filtered.filter(c => c.estado === 'Completada').length;
+    let kpiEstadoLabel = 'En curso', kpiEstadoColor = 'var(--ibk-blue)', kpiEstadoDetalle = `${estadoCompletadas} completadas`;
+    if (filtered.length && estadoRetrasadas / filtered.length > 0.3) { kpiEstadoLabel = 'En riesgo'; kpiEstadoColor = 'var(--danger)'; kpiEstadoDetalle = `${estadoRetrasadas} categorías retrasadas`; }
+    else if (filtered.length && estadoCompletadas / filtered.length > 0.6) { kpiEstadoLabel = 'Saludable'; kpiEstadoColor = 'var(--ibk-green-4)'; }
+
+    // Roadmap cards
+    const roadmap = (this.FASES || []).map(f => {
+      const cats = filtered.filter(c => c.fase === f.id);
+      const promedio = cats.reduce((a, c) => a + c.promedio, 0);
+      const pct = S.globalPromedioMensual ? Math.round((promedio / S.globalPromedioMensual) * 1000) / 10 : 0;
+      const completadas = cats.filter(c => c.estado === 'Completada').length;
+      const estadoLabel = cats.length === 0 ? 'Sin datos' : completadas === cats.length ? 'Completada' : cats.some(c => c.estado === 'Retrasada') ? 'Con retrasos' : 'En curso';
+      const active = S.filterRoadmap === 'Todas' || S.filterRoadmap === f.nombre;
+      return {
+        numeral: f.id, nombre: f.nombre, pct, promedioDisplay: this.fmt(promedio), estadoLabel,
+        cardStyle: `position:relative;z-index:1;background:var(--ibk-white);border-radius:14px;padding:16px;box-shadow:0 4px 20px rgba(0,0,0,${active ? '0.08' : '0.03'});opacity:${active ? 1 : 0.4};transition:opacity .2s;border-top:4px solid ${f.color};`,
+        badgeStyle: `width:26px;height:26px;border-radius:8px;background:${f.color};color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;`,
+        estadoChipStyle: `display:inline-block;margin-top:10px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:${this.estadoColor(estadoLabel === 'Completada' ? 'Completada' : estadoLabel === 'Con retrasos' ? 'Retrasada' : 'En implementación')}22;color:${this.estadoColor(estadoLabel === 'Completada' ? 'Completada' : estadoLabel === 'Con retrasos' ? 'Retrasada' : 'En implementación')};`,
+      };
+    });
+
+    // Responsable bars
+    const respGroups = [
+      { label: 'Canvia', match: c => c.responsable === 'Canvia', color: 'var(--ibk-green)' },
+      { label: 'No Canvia', match: c => c.responsable !== 'Canvia', color: 'var(--ibk-green-4)' },
+      { label: 'Autoatención', match: c => c.responsable === 'Autoatención', color: 'var(--ibk-blue)' },
+      { label: 'Shift-Left Nivel 3', match: c => c.responsable === 'Shift-Left Nivel 3', color: 'var(--ibk-green-3)' },
+    ];
+    const respRaw = respGroups.map(g => {
+      const cats = filtered.filter(g.match);
+      const promedio = cats.reduce((a, c) => a + c.promedio, 0);
+      return { ...g, promedio };
+    });
+    const maxResp = Math.max(1, ...respRaw.map(r => r.promedio));
+    const responsableBars = respRaw.map((r, i) => {
+      const pct = S.globalPromedioMensual ? Math.round((r.promedio / S.globalPromedioMensual) * 1000) / 10 : 0;
+      return {
+        label: r.label, pct, promedioDisplay: this.fmt(r.promedio),
+        fillStyle: `height:100%;width:${Math.round((r.promedio / maxResp) * 100)}%;background:${r.color};border-radius:8px;transition:width .4s ease;`,
+        hovered: S.hoveredBar === i,
+        tooltip: `${this.fmt(r.promedio)} / mes · ${pct}%`,
+        onEnter: () => this.setState({ hoveredBar: i }), onLeave: () => this.setState({ hoveredBar: null }),
+      };
+    });
+
+    // Donut Filtro IA — 4 buckets (Agente Humano = Granulares + Categorías Cerradas + Agente Humano)
+    const donutDefs = [
+      { label: 'Automatización IA', match: c => c.filtroIA === 'Automatización IA', color: 'var(--ibk-green)' },
+      { label: 'Automatización Parcial', match: c => c.filtroIA === 'Automatización Parcial', color: 'var(--ibk-green-2)' },
+      { label: 'IA Derivación Directa', match: c => c.filtroIA === 'IA Derivación Directa', color: 'var(--ibk-blue)' },
+      { label: 'Agente Humano', match: c => c.filtroIA === 'Agente Humano', color: 'var(--ibk-green-4)' },
+      { label: 'Granulares', match: c => c.filtroIA === 'Granulares', color: 'var(--ibk-gray-50)' },
+      { label: 'Categorías Cerradas', match: c => c.filtroIA === 'Categorías Cerradas', color: 'var(--ibk-gray-30)' },
+    ];
+    const donutRaw = donutDefs.map(d => ({ ...d, total: filtered.filter(d.match).reduce((a, c) => a + c.total, 0), promedio: filtered.filter(d.match).reduce((a, c) => a + c.promedio, 0) })).filter(d => d.total > 0);
+    const donutGrandTotal = Math.max(1, donutRaw.reduce((a, d) => a + d.total, 0));
+    const donutCenterPromedio = donutRaw.length ? Math.round(donutRaw.reduce((a, d) => a + d.promedio, 0) / donutRaw.length) : 0;
+    const circumference = 2 * Math.PI * 52;
+    let acc = 0;
+    const donutSegments = donutRaw.map((d, i) => {
+      const frac = d.total / donutGrandTotal;
+      const len = frac * circumference;
+      const seg = { label: d.label, color: d.color, pct: Math.round(frac * 1000) / 10, promedioDisplay: this.fmt(d.promedio), dashArray: `${len} ${circumference - len}`, dashOffset: -acc, opacity: (S.hoveredSeg === null || S.hoveredSeg === i) ? 1 : 0.35, onEnter: () => this.setState({ hoveredSeg: i }), onLeave: () => this.setState({ hoveredSeg: null }), onClick: () => this.setFilter('filtroIA', d.label === 'Agente Humano' ? 'Agente Humano' : d.label) };
+      acc += len;
+      return seg;
+    });
+    const hoveredSegData = S.hoveredSeg !== null ? donutSegments[S.hoveredSeg] : null;
+    const donutTooltipVisible = S.centerHovered || !!hoveredSegData;
+    const donutTooltipText = hoveredSegData ? `${hoveredSegData.label}: ${hoveredSegData.promedioDisplay} ticket/mes` : `${this.fmt(totalFiltrado)} tickets · ${this.fmt(donutCenterPromedio)} ticket/mes`;
+
+    // Detalle tab
+    const dates = S.categorias.flatMap(c => [c.fechaInicio, c.fechaFinPlan]).filter(Boolean).map(d => new Date(d).getTime());
+    const minDate = dates.length ? Math.min(...dates) : Date.now();
+    const maxDate = dates.length ? Math.max(...dates) : Date.now();
+    const span = Math.max(1, maxDate - minDate);
+    const detalleMax = Math.max(1, ...filtered.map(c => c.promedio));
+    const detalle = filtered.slice().sort((a, b) => b.total - a.total).map(c => {
+      const left = ((new Date(c.fechaInicio).getTime() - minDate) / span) * 100;
+      const width = Math.max(2, ((new Date(c.fechaFinPlan).getTime() - new Date(c.fechaInicio).getTime()) / span) * 100);
+      const pct = totalFiltrado ? Math.round((c.total / totalFiltrado) * 1000) / 10 : 0;
+      return {
+        id: c.id, name: c.name, promedioDisplay: this.fmt(c.promedio), pct,
+        subtext: `${this.faseNombre(c.fase).toUpperCase()} · ${c.filtroIA} · ${c.responsable}`,
+        barStyle: `height:100%;width:${Math.round((c.promedio / detalleMax) * 100)}%;background:${this.faseColor(c.fase)};border-radius:6px;transition:width .4s ease;`,
+        ganttStyle: `position:absolute;top:3px;bottom:3px;left:${left}%;width:${width}%;background:${this.estadoColor(c.estado)};border-radius:5px;`,
+        fechaInicio: c.fechaInicio, estadoLabel: c.estado,
+        estadoChipStyle: `font-size:10px;font-weight:700;padding:2px 7px;border-radius:999px;background:${this.estadoColor(c.estado)}22;color:${this.estadoColor(c.estado)};`,
+        onOpen: () => this.openDrawer(c.id),
+      };
+    });
+
+    // Sección 6: avance contractual vs real — estamos en el Año 1
+    const AC = [{ anio: 'Año 1', objetivo: 19 }, { anio: 'Año 2', objetivo: 26 }, { anio: 'Año 3', objetivo: 34 }, { anio: 'Año 4', objetivo: 41 }];
+    const currentYearIndex = 0;
+    const avanceRealActual = Math.round((S.categorias.filter(c => c.estado === 'Completada').reduce((a, c) => a + c.total, 0) / S.grandTotal) * 1000) / 10;
+    const realSeries = AC.map((d, i) => (i === currentYearIndex ? avanceRealActual : null));
+    const maxY = 55;
+    const chartW = 800, chartH = 220, pad = 30;
+    const xFor = i => pad + (i / 3) * (chartW - pad * 2);
+    const yFor = v => chartH - pad - (v / maxY) * (chartH - pad * 2);
+    const contractualPath = AC.map((d, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i)} ${yFor(d.objetivo)}`).join(' ');
+    const realKnown = realSeries.map((v, i) => (v !== null ? { i, v } : null)).filter(Boolean);
+    const realPath = realKnown.map((p, k) => `${k === 0 ? 'M' : 'L'} ${xFor(p.i)} ${yFor(p.v)}`).join(' ');
+    const chartGridLines = [0, 1, 2, 3, 4].map(i => ({ y: pad + (i / 4) * (chartH - pad * 2) }));
+    const linePoints = AC.map((d, i) => ({
+      anio: d.anio, x: xFor(i), objY: yFor(d.objetivo), realY: realSeries[i] !== null ? yFor(realSeries[i]) : null, hasReal: realSeries[i] !== null, hitX: xFor(i) - 60,
+      onEnter: () => this.setState({ hoveredPointIdx: i }), onLeave: () => this.setState({ hoveredPointIdx: null }),
+    }));
+    // visible % labels positioned on the chart (as percentages of the viewBox, for absolute overlay)
+    const chartLabels = AC.map((d, i) => {
+      const objLeftPct = (xFor(i) / chartW) * 100, objTopPct = (yFor(d.objetivo) / chartH) * 100;
+      const real = realSeries[i];
+      const out = [{ left: objLeftPct, top: objTopPct - 9, text: `${d.objetivo}%`, color: 'var(--ibk-gray-70)' }];
+      if (real !== null) out.push({ left: objLeftPct, top: (yFor(real) / chartH) * 100 + 6, text: `${real}%`, color: 'var(--ibk-green-4)' });
+      return out;
+    }).flat().map(l => ({ style: `position:absolute; left:${l.left}%; top:${l.top}%; transform:translate(-50%,0); font-size:12px; font-weight:700; color:${l.color}; background:rgba(255,255,255,0.85); padding:0 3px; border-radius:4px; pointer-events:none;`, text: l.text }));
+    const hoveredPoint = S.hoveredPointIdx !== null;
+    const hp = hoveredPoint ? { anio: AC[S.hoveredPointIdx].anio, objetivo: AC[S.hoveredPointIdx].objetivo, real: realSeries[S.hoveredPointIdx] } : null;
+    const hoveredPointStyle = hp ? `position:absolute; left:${Math.min(75, (linePoints[S.hoveredPointIdx].x / chartW) * 100)}%; top:10px; background:var(--ibk-black); color:#fff; font-size:12px; padding:8px 12px; border-radius:8px; white-space:nowrap;` : '';
+    const hoveredPointLabel = hp ? `${hp.anio} · Objetivo ${hp.objetivo}%${hp.real !== null ? ` · Real ${hp.real}% · Brecha ${Math.round((hp.objetivo - hp.real) * 10) / 10}%` : ' · Real: aún no alcanzado'}` : '';
+    const avanceContractualKpi = AC[currentYearIndex].objetivo;
+    const avanceRealKpi = avanceRealActual;
+    const brechaKpi = Math.round((avanceContractualKpi - avanceRealKpi) * 10) / 10;
+    const totalCats = S.categorias.length;
+    const completadasCats = S.categorias.filter(c => c.estado === 'Completada').length;
+
+    // Distribución tab
+    const groupDefs = [
+      { label: 'Canvia', match: c => c.responsable === 'Canvia' },
+      { label: 'Autoatención', match: c => c.responsable === 'Autoatención' },
+      { label: 'Shift-Left Nivel 3', match: c => c.responsable === 'Shift-Left Nivel 3' },
+    ];
+    const distribucionGroups = groupDefs.map(g => {
+      const cats = S.categorias.filter(g.match);
+      const total = cats.reduce((a, c) => a + c.total, 0);
+      const promedio = cats.reduce((a, c) => a + c.promedio, 0);
+      const fases = (this.FASES || []).map(f => {
+        const fc = cats.filter(c => c.fase === f.id);
+        const ftotal = fc.reduce((a, c) => a + c.total, 0);
+        const pct = total ? Math.round((ftotal / total) * 1000) / 10 : 0;
+        const iaSet = [...new Set(fc.map(c => c.filtroIA))];
+        return { nombre: f.nombre, pct, totalDisplay: this.fmt(ftotal), filtroIA: iaSet.join(' / ') || '—', style: `background:var(--ibk-gray-05);border-radius:10px;padding:12px 14px;border-top:3px solid ${f.color};` };
+      });
+      return { label: g.label, totalDisplay: this.fmt(total), promedioDisplay: this.fmt(promedio), fases };
+    });
+
+    return {
+      loaded: true,
+      isResumen: S.activeTab === 'resumen', isDetalle: S.activeTab === 'detalle', isDistribucion: S.activeTab === 'distribucion',
+      roadmapOptions, responsableOptions, filtroIAOptions, tabs, resetFilters: () => this.resetFilters(),
+      roadmapSelectOptions: roadmapDefs.map(d => d.label), responsableSelectOptions: responsableDefs, filtroIASelectOptions: filtroIADefs,
+      filterRoadmap: S.filterRoadmap, filterResponsable: S.filterResponsable, filterFiltroIA: S.filterFiltroIA,
+      onChangeRoadmapFilter: (e) => this.setFilter('roadmap', e.target.value),
+      onChangeResponsableFilter: (e) => this.setFilter('responsable', e.target.value),
+      onChangeFiltroIAFilter: (e) => this.setFilter('filtroIA', e.target.value),
+      centerHovered: donutTooltipVisible, centerTooltip: donutTooltipText,
+      onCenterEnter: () => this.setState({ centerHovered: true }), onCenterLeave: () => this.setState({ centerHovered: false }),
+      kpiPromedioDisplay: this.fmt(S.kAnim.promedio), kpiPctDisplay: (Math.round(S.kAnim.pct * 10) / 10), kpiCategoriasDisplay: S.kAnim.categorias,
+      kpiEstadoLabel, kpiEstadoColor, kpiEstadoDetalle,
+      roadmap, responsableBars, donutSegments, donutCenterLabel: this.fmt(donutCenterPromedio),
+      detalle,
+      avanceContractualKpi, avanceRealKpi, brechaKpi, brechaColor: brechaKpi > 5 ? 'var(--danger)' : 'var(--ibk-green-4)',
+      categoriasCompletadasKpi: `${completadasCats}/${totalCats}`,
+      chartGridLines, contractualPath, realPath, linePoints, chartLabels, hoveredPoint, hoveredPointStyle, hoveredPointLabel,
+      distribucionGroups,
+      drawerOpen: S.drawerOpen,
+      drawerCat: (() => { const c = S.categorias.find(x => x.id === S.drawerCatId) || {}; return { name: c.name || '', faseNombre: this.faseNombre(c.fase), responsable: c.responsable || '', filtroIA: c.filtroIA || '' }; })(),
+      formEstado: S.form.estado || '', formFechaInicio: S.form.fechaInicio || '', formFechaFinPlan: S.form.fechaFinPlan || '', formFechaFinReal: S.form.fechaFinReal || '',
+      estadoOptions: ['No iniciada', 'En implementación', 'Completada', 'Retrasada'],
+      onChangeEstado: (e) => this.updateForm('estado', e.target.value),
+      onChangeFechaInicio: (e) => this.updateForm('fechaInicio', e.target.value),
+      onChangeFechaFinPlan: (e) => this.updateForm('fechaFinPlan', e.target.value),
+      onChangeFechaFinReal: (e) => this.updateForm('fechaFinReal', e.target.value),
+      saveDrawer: () => this.saveDrawer(), closeDrawer: () => this.closeDrawer(),
+    };
+  }
+}
+</script>
+</body>
+</html>

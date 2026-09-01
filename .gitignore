@@ -5,4 +5,6 @@ node_modules/
 backend/data/projects.csv
 backend/data/tasks.csv
 backend/data/users.csv
+backend/data/independent_tasks.csv
+backend/data/audit_log.csv
 backend/data/*.tmp-*

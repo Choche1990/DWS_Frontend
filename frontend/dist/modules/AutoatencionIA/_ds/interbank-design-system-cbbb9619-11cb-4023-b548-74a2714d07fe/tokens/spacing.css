@@ -1,0 +1,26 @@
+:root {
+  /* 8pt base scale — proposed default, not explicit in manual */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+  --space-6: 48px;
+  --space-7: 64px;
+  --space-8: 96px;
+
+  /* Icon sizing scale — explicit in manual, ch.04.3 */
+  --icon-sm: 40px;
+  --icon-md: 56px;
+  --icon-lg: 72px;
+  --icon-xl: 88px;
+
+  /* Radii — soft/rounded system. Isotipo container + info-container corners. */
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 999px;
+
+  /* Touch targets */
+  --touch-min: 44px;
+}
