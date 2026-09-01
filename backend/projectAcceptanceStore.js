@@ -68,8 +68,9 @@ function buildAcceptanceDocument(project, acceptance, originalXml) {
     signatures.length ? signatures.map((item) => [item.rol || 'Aprobador', item.nombre, '____________________', formatDate(item.fecha)]) : [['Por definir', 'Por definir', '____________________', 'Por definir']]
   );
   const projectObjectives = objectives.map((item) => item.texto).join('; ');
-  const summary = project.descripcionEjecutiva || project.descripcion || `El proyecto “${project.nombre || 'Por definir'}” se desarrolló entre ${formatDate(project.inicio)} y ${formatDate(project.fin)}.`;
-  const generalResult = `Objetivos principales: ${projectObjectives || 'Por definir'}. Resultado general: ${project.estado || 'Por definir'} con ${Number(project.avance) || 0}% de avance registrado.`;
+  const mainObjective = String(project.objetivo || projectObjectives || 'Por definir').trim().replace(/[.\s]+$/, '');
+  const defaultSummary = `El proyecto “${project.tituloEjecutivo || project.nombre || 'Por definir'}” se desarrolló entre ${formatDate(project.inicio)} y ${formatDate(project.fin)}. ${project.descripcionEjecutiva || project.descripcion || ''} Su objetivo principal fue ${mainObjective}. El resultado general registrado es ${project.estado || 'Por definir'}, con ${Number(project.avance) || 0}% de avance.`.replace(/\s+/g, ' ').trim();
+  const summary = acceptance.resumenEjecutivo || defaultSummary;
   const declaration = acceptance.declaracion || 'Declaro que el proyecto ha sido completado de acuerdo con los requerimientos establecidos y que los entregables cumplen con los criterios de aceptación definidos.';
   const formalName = acceptance.aceptacionNombre || 'Por definir';
   const formalDate = formatDate(acceptance.aceptacionFecha);
@@ -77,7 +78,7 @@ function buildAcceptanceDocument(project, acceptance, originalXml) {
   const body = [
     paragraph('ACTA DE ACEPTACIÓN DE PROYECTO', { bold: true, color: '0070C0', size: 34, align: 'center', after: 80 }),
     paragraph(project.tituloEjecutivo || project.nombre || 'Proyecto', { bold: true, color: '00B050', size: 24, align: 'center', after: 220 }),
-    heading(1, 'Resumen Ejecutivo'), paragraph(summary), paragraph(generalResult),
+    heading(1, 'Resumen Ejecutivo'), paragraph(summary),
     heading(2, 'Cumplimiento de Objetivos'), table(objectiveRows, [2600, 2200, 2200, 1800]),
     heading(3, 'Entregables Finales Aprobados'), paragraph('Entregables validados y aceptados formalmente.', { italic: true, color: '6B7684', size: 19 }), table(deliverableRows, [2800, 1800, 2300, 2300]),
     heading(4, 'Aceptación Formal del Cliente/Usuario Final'), paragraph(declaration),

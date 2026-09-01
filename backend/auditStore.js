@@ -42,7 +42,19 @@ function loadProjectHistory(projectId) {
   ensureAuditFile();
   return readCSVFile(AUDIT_CSV).rows
     .filter((row) => String(row.projectId) === String(projectId))
+    .filter((row) => {
+      if (row.action === 'CREATE' || row.action === 'DELETE') return row.entityType === 'project' || row.entityType === 'project_task';
+      return row.action === 'UPDATE' && (row.field === 'fechaSolicitud' || row.field === 'inicio' || row.field === 'fin' || row.field === 'finReal');
+    })
     .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
 }
 
-module.exports = { ensureAuditFile, appendAudit, loadProjectHistory };
+function loadIndependentTaskHistory() {
+  ensureAuditFile();
+  return readCSVFile(AUDIT_CSV).rows
+    .filter((row) => row.entityType === 'independent_task')
+    .filter((row) => row.action === 'CREATE' || row.action === 'DELETE' || (row.action === 'UPDATE' && (row.field === 'inicio' || row.field === 'fin')))
+    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+}
+
+module.exports = { ensureAuditFile, appendAudit, loadProjectHistory, loadIndependentTaskHistory };

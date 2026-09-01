@@ -214,24 +214,9 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
     if (!previousProject) {
       auditEntries.push({ action: 'CREATE', entityType: 'project', entityId: project.id, projectId: project.id, newValue: project.nombre || '' });
     } else {
-      for (const field of PROJECTS_HEADERS) {
-        if (field === 'createdAt' || field === 'updatedAt' || field === 'extra') continue;
+      for (const field of ['fechaSolicitud', 'inicio', 'fin', 'finReal']) {
         if (String(previousProject[field] || '') !== String(projectRow[field] || '')) {
           auditEntries.push({ action: 'UPDATE', entityType: 'project', entityId: project.id, projectId: project.id, field, oldValue: previousProject[field], newValue: projectRow[field] });
-        }
-      }
-      const previousExtra = safeJsonParse(previousProject.extra, {});
-      const currentExtra = safeJsonParse(projectRow.extra, {});
-      const trackedExtraFields = {
-        objetivos: 'Objetivos', entregables: 'Entregables', pendientesRecomendaciones: 'Pendientes y recomendaciones', actaAceptacion: 'Configuración del acta de aceptación', stakeholders: 'Stakeholders',
-        alcance: 'Alcance', presupuestoNA: 'Presupuesto', presupuestoMonto: 'Monto de presupuesto',
-        presupuestoMoneda: 'Moneda de presupuesto',
-      };
-      for (const [key, label] of Object.entries(trackedExtraFields)) {
-        const oldValue = JSON.stringify(previousExtra[key] == null ? '' : previousExtra[key]);
-        const newValue = JSON.stringify(currentExtra[key] == null ? '' : currentExtra[key]);
-        if (oldValue !== newValue) {
-          auditEntries.push({ action: 'UPDATE', entityType: 'project', entityId: project.id, projectId: project.id, field: label, oldValue, newValue });
         }
       }
     }
@@ -253,8 +238,7 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
       if (!previousTask) {
         auditEntries.push({ action: 'CREATE', entityType: 'project_task', entityId: task.id, projectId: project.id, newValue: task.nombre || '' });
       } else {
-        for (const field of TASKS_HEADERS) {
-          if (['projectId', 'id', 'createdAt', 'updatedAt', 'createdByEmail', 'dateSetupUntil'].includes(field)) continue;
+        for (const field of ['inicio', 'fin']) {
           if (String(previousTask[field] || '') !== String(taskRow[field] || '')) {
             auditEntries.push({ action: 'UPDATE', entityType: 'project_task', entityId: task.id, projectId: project.id, field, oldValue: previousTask[field], newValue: taskRow[field] });
           }

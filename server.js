@@ -7,7 +7,7 @@ const path = require('path');
 const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore');
 const { ensureUsersFile, findUser } = require('./backend/usersStore');
 const { ensureIndependentTasksFile, loadIndependentTasks, saveIndependentTasks, upsertIndependentTask, deleteIndependentTask } = require('./backend/independentTasksStore');
-const { ensureAuditFile, loadProjectHistory } = require('./backend/auditStore');
+const { ensureAuditFile, loadProjectHistory, loadIndependentTaskHistory } = require('./backend/auditStore');
 const { buildProjectCharter, safeFileName } = require('./backend/projectCharterStore');
 const { buildProjectAcceptance } = require('./backend/projectAcceptanceStore');
 
@@ -202,6 +202,11 @@ const server = http.createServer((req, res) => {
   if (apiPath === '/api/project-history' && req.method === 'GET') {
     try {
       const requestUrl = new URL(req.url, 'http://localhost');
+      if (requestUrl.searchParams.get('scope') === 'independent') {
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ history: loadIndependentTaskHistory() }));
+        return;
+      }
       const projectId = requestUrl.searchParams.get('projectId');
       if (!projectId) {
         res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });

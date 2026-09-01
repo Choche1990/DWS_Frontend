@@ -166,9 +166,9 @@ function buildDocument(project, originalXml) {
   for (const task of (project.tareas || [])) ganttRows.push([task.nombre || 'Tarea', formatDate(task.inicio), formatDate(task.fin), task.asignado || project.asignado || '—']);
   const risks = Array.isArray(project.riesgos) ? project.riesgos.filter((item) => typeof item === 'string' ? item.trim() : item && String(item.riesgo || item.text || '').trim()) : [];
   const riskRows = [['Riesgo potencial', 'Propuesta de mitigación de riesgo']].concat(risks.length ? risks.map(riskRow) : [['Por definir', 'Por definir']]);
-  const objectives = (Array.isArray(project.objetivos) && project.objetivos.length
-    ? project.objetivos.map((item) => typeof item === 'string' ? item : item && (item.texto || item.objetivo))
-    : String(project.objetivo || '').split(/\n+/))
+  const objectives = (String(project.objetivo || '').trim()
+    ? [project.objetivo]
+    : (Array.isArray(project.objetivos) ? project.objetivos.map((item) => typeof item === 'string' ? item : item && (item.texto || item.objetivo)) : []))
     .map((item) => String(item || '').trim()).filter(Boolean);
   const objectiveParagraphs = (objectives.length ? objectives : ['Por definir'])
     .map((item) => paragraph(`• ${item}`, { after: 55 })).join('');

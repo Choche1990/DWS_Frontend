@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { readCSVFile, writeCSVFileAtomic } = require('./csvStore');
+const { appendAudit } = require('./auditStore');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const TASKS_CSV = path.join(DATA_DIR, 'independent_tasks.csv');
@@ -74,7 +75,24 @@ function saveIndependentTasks({ tasks, actor = {} }) {
       updatedAt: now,
     };
   });
+  const auditEntries = [];
+  for (const row of rows) {
+    const prev = previousById.get(String(row.id));
+    if (!prev) {
+      auditEntries.push({ action: 'CREATE', entityType: 'independent_task', entityId: row.id, newValue: row.titulo || 'Nueva tarea independiente' });
+      continue;
+    }
+    for (const field of ['inicio', 'fin']) {
+      if (String(prev[field] || '') !== String(row[field] || '')) {
+        auditEntries.push({ action: 'UPDATE', entityType: 'independent_task', entityId: row.id, field, oldValue: prev[field], newValue: row[field] });
+      }
+    }
+  }
+  for (const prev of previous) {
+    if (!incomingIds.has(String(prev.id))) auditEntries.push({ action: 'DELETE', entityType: 'independent_task', entityId: prev.id, oldValue: prev.titulo || 'Tarea independiente' });
+  }
   writeCSVFileAtomic(TASKS_CSV, HEADERS, rows);
+  appendAudit(auditEntries, { email: actor.email || '', name: actor.name || '', role });
   return { tasks: rows.map(rowToTask) };
 }
 
