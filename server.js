@@ -9,6 +9,7 @@ const { ensureUsersFile, findUser } = require('./backend/usersStore');
 const { ensureIndependentTasksFile, loadIndependentTasks, saveIndependentTasks, upsertIndependentTask, deleteIndependentTask } = require('./backend/independentTasksStore');
 const { ensureAuditFile, loadProjectHistory } = require('./backend/auditStore');
 const { buildProjectCharter, safeFileName } = require('./backend/projectCharterStore');
+const { buildProjectAcceptance } = require('./backend/projectAcceptanceStore');
 
 ensureDataFiles();
 ensureUsersFile();
@@ -239,6 +240,44 @@ const server = http.createServer((req, res) => {
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: 'project_charter_failed', message: String(error.message || error) }));
     }
+    return;
+  }
+
+  if (apiPath === '/api/project-acceptance' && req.method === 'POST') {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}');
+        const persistedProject = loadGantt().projects.find((item) => String(item.id) === String(body.projectId));
+        if (!persistedProject) {
+          res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'project_not_found' }));
+          return;
+        }
+        const snapshot = body.projectSnapshot && typeof body.projectSnapshot === 'object' ? body.projectSnapshot : {};
+        const project = { ...persistedProject };
+        for (const field of ['nombre', 'tituloEjecutivo', 'descripcion', 'descripcionEjecutiva', 'objetivo', 'objetivos', 'entregables', 'pendientesRecomendaciones', 'inicio', 'fin', 'estado', 'avance']) {
+          if (snapshot[field] !== undefined) project[field] = snapshot[field];
+        }
+        const document = buildProjectAcceptance(project, body.acceptance || {});
+        const filename = `Acta_Aceptacion_${safeFileName(project.nombre)}.docx`;
+        res.writeHead(200, {
+          'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'Content-Disposition': `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Content-Length': document.length,
+          'Cache-Control': 'no-store',
+        });
+        res.end(document);
+      } catch (error) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'project_acceptance_failed', message: String(error.message || error) }));
+      }
+    });
+    req.on('error', () => {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'request_error' }));
+    });
     return;
   }
 

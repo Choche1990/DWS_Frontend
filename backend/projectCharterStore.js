@@ -201,4 +201,4 @@ function safeFileName(value) {
     .replace(/[<>:"/\\|?*\x00-\x1F]/g, '').replace(/\s+/g, '_').slice(0, 80);
 }
 
-module.exports = { buildProjectCharter, safeFileName };
+module.exports = { buildProjectCharter, safeFileName, _docx: { readZip, writeZip } };

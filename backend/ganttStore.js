@@ -223,7 +223,7 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
       const previousExtra = safeJsonParse(previousProject.extra, {});
       const currentExtra = safeJsonParse(projectRow.extra, {});
       const trackedExtraFields = {
-        objetivos: 'Objetivos', entregables: 'Entregables', stakeholders: 'Stakeholders',
+        objetivos: 'Objetivos', entregables: 'Entregables', pendientesRecomendaciones: 'Pendientes y recomendaciones', actaAceptacion: 'Configuración del acta de aceptación', stakeholders: 'Stakeholders',
         alcance: 'Alcance', presupuestoNA: 'Presupuesto', presupuestoMonto: 'Monto de presupuesto',
         presupuestoMoneda: 'Moneda de presupuesto',
       };
