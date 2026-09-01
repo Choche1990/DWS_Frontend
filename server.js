@@ -8,6 +8,7 @@ const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore'
 const { ensureUsersFile, findUser } = require('./backend/usersStore');
 const { ensureIndependentTasksFile, loadIndependentTasks, saveIndependentTasks, upsertIndependentTask, deleteIndependentTask } = require('./backend/independentTasksStore');
 const { ensureAuditFile, loadProjectHistory } = require('./backend/auditStore');
+const { buildProjectCharter, safeFileName } = require('./backend/projectCharterStore');
 
 ensureDataFiles();
 ensureUsersFile();
@@ -211,6 +212,32 @@ const server = http.createServer((req, res) => {
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: 'history_load_failed', message: String(error.message || error) }));
+    }
+    return;
+  }
+
+  if (apiPath === '/api/project-charter' && req.method === 'GET') {
+    try {
+      const requestUrl = new URL(req.url, 'http://localhost');
+      const projectId = requestUrl.searchParams.get('projectId');
+      const project = loadGantt().projects.find((item) => String(item.id) === String(projectId));
+      if (!project) {
+        res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ error: 'project_not_found' }));
+        return;
+      }
+      const document = buildProjectCharter(project);
+      const filename = `Project_Charter_${safeFileName(project.nombre)}.docx`;
+      res.writeHead(200, {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'Content-Disposition': `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+        'Content-Length': document.length,
+        'Cache-Control': 'no-store',
+      });
+      res.end(document);
+    } catch (error) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'project_charter_failed', message: String(error.message || error) }));
     }
     return;
   }

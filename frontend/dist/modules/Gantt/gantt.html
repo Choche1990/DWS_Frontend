@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     template = template.replace(
       '<input class="ib-cell" style="font-size:24px;font-weight:700;width:100%;padding:2px 0" value="{{ sel.tituloEjecutivo }}" sc-camel-on-change="{{ sel.onTituloEjecutivo }}" placeholder="Título del proyecto">',
-      '<div style="display:flex;align-items:center;gap:12px"><input class="ib-cell" style="font-size:24px;font-weight:700;width:100%;padding:2px 0" value="{{ sel.tituloEjecutivo }}" sc-camel-on-change="{{ sel.onTituloEjecutivo }}" placeholder="Título del proyecto"><button sc-camel-on-click="{{ sel.editProject }}" style="display:inline-flex;align-items:center;gap:6px;background:#062B14;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap">Editar proyecto</button></div>'
+      '<div style="display:flex;align-items:center;gap:9px"><input class="ib-cell" style="font-size:24px;font-weight:700;width:100%;padding:2px 0" value="{{ sel.tituloEjecutivo }}" sc-camel-on-change="{{ sel.onTituloEjecutivo }}" placeholder="Título del proyecto"><button sc-camel-on-click="{{ sel.exportCharter }}" style="display:inline-flex;align-items:center;gap:6px;background:#E3F7EC;color:#005F1E;border:1px solid #B9E5C9;border-radius:999px;padding:8px 14px;font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap">Project Charter</button><button sc-camel-on-click="{{ sel.editProject }}" style="display:inline-flex;align-items:center;gap:6px;background:#062B14;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap">Editar proyecto</button></div>'
     );
     template = template.replace(
       '<span style="font-size:12.5px;color:#6B7684">Solicitado por <b style="color:#3A4756">{{ sel.solicitante }}</b></span>',
@@ -284,6 +284,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     hasStakeholders: (rp.stakeholders || []).length > 0, stakeholdersEmpty: !(rp.stakeholders || []).length,
     addStakeholder: () => this.update(rp.id,{stakeholders:[...(rp.stakeholders||[]),{persona:'',rol:'',actividades:'',pertenencia:'Interbank',empresa:'Interbank'}]}),
     editProject: () => this.setState({openId:rp.id,openFilter:null,colMenuOpen:false,groupMenuOpen:false}),
+    exportCharter: () => this.openProjectCharter(rp),
     roadmapProjectColor: rp.estBarColor || '#05BE50',
     roadmapMonths: (() => { const a=new Date(rp.inicio||Date.now()),b=new Date(rp.fin||Date.now()); const sy=a.getFullYear(),sm=a.getMonth(),ey=b.getFullYear(),em=b.getMonth(),n=Math.max(1,(ey-sy)*12+em-sm+1); return Array.from({length:n},(_,i)=>{const y=sy+Math.floor((sm+i)/12),m=(sm+i)%12;return {label:this.MONTHS[m]+(sy!==ey?" '"+String(y).slice(2):''),headerStyle:'flex:1;padding:10px 0;text-align:center;font-size:11px;font-weight:700;color:#3A4756;border-left:1px solid #F0F2F4;background:'+(i===0||i===n-1?'#F1F8F3':'#FAFBFC'),gridStyle:'position:absolute;top:0;bottom:0;left:'+(i/n*100)+'%;width:'+(100/n)+'%;border-left:1px solid #F2F4F6'}}); })(),
     roadmapGanttRows: (() => { const ps=Date.parse(rp.inicio),pe=Date.parse(rp.fin),span=Math.max(1,pe-ps),geo=(a,b)=>{const x=Date.parse(a),y=Date.parse(b),l=isNaN(x)?0:Math.max(0,Math.min(100,(x-ps)/span*100)),r=isNaN(y)?l:Math.max(l,Math.min(100,(y-ps)/span*100));return {left:l,width:Math.max(1.5,r-l)}}; const pg=geo(rp.inicio,rp.fin), team=this.TEAM[rp.asignado]||{initials:'?',color:'#6B7280'}; const out=[{isProj:true,isTask:false,nombre:rp.nombre,estDotStyle:rp.estDotStyle,initials:team.initials,avatarStyle:'width:22px;height:22px;border-radius:50%;background:'+team.color+';color:#fff;font-size:9px;font-weight:600;display:inline-flex;align-items:center;justify-content:center',barStyle:'position:absolute;top:9px;height:20px;left:'+pg.left+'%;width:'+pg.width+'%;background:'+(rp.estBarColor||'#05BE50')+';border-radius:7px;display:flex;align-items:center;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.12)',fillStyle:rp.avanceFillStyle,labelStyle:rp.barLabelStyle,avance:rp.avance}]; (rp.tareas||[]).forEach(t=>{const g=geo(t.inicio,t.fin),planned=Math.round(this.taskPlanned(t));out.push({isProj:false,isTask:true,nombre:t.nombre,pesoLabel:(Number(t.peso)||0)+'%',barStyle:'position:absolute;top:7px;height:14px;left:'+g.left+'%;width:'+g.width+'%;background:#9FD9B4;border-radius:6px;overflow:hidden',fillStyle:'position:absolute;left:0;top:0;height:100%;width:'+(Number(t.avance)||0)+'%;background:#05BE50',markStyle:'position:absolute;top:0;bottom:0;left:'+planned+'%;width:2px;background:#1B2733;opacity:.55'});}); return out; })(),
@@ -637,6 +638,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 </sc-if>
 
 `;
+    const charterPanel = `<sc-if value="{{ isCharterConfirm }}" hint-placeholder-val="{{ false }}">
+  <div sc-camel-on-click="{{ closeCharter }}" style="position:fixed;inset:0;background:rgba(15,25,35,.38);z-index:90"></div>
+  <div style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:560px;max-width:92vw;max-height:88vh;overflow-y:auto;background:#fff;border-radius:18px;z-index:91;box-shadow:0 24px 70px rgba(0,0,0,.25);padding:22px 24px">
+    <div style="font-size:11px;color:#00792F;text-transform:uppercase;font-weight:800">Exportación Word</div><div style="font-size:19px;font-weight:700;margin-top:3px">Generar Project Charter</div><div style="font-size:13px;color:#6B7684;margin-top:5px">{{ charterProjectName }}</div>
+    <div style="margin-top:16px;background:#F7F9FA;border-radius:12px;padding:12px 14px"><div style="font-size:11px;font-weight:700;color:#3A4756;margin-bottom:7px">Datos que se incluirán</div><sc-for list="{{ charterSummary }}" as="line" hint-placeholder-count="6"><div style="font-size:12px;color:#53606D;padding:3px 0">• {{ line }}</div></sc-for></div>
+    <sc-if value="{{ charterHasMissing }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;background:#FFF4E5;border:1px solid #F1D29E;border-radius:12px;padding:12px 14px"><div style="font-size:11px;font-weight:800;color:#8A4B12">Campos pendientes</div><div style="font-size:12px;color:#76501E;margin-top:5px">Se exportarán como “Por definir”: {{ charterMissingLabel }}</div></div></sc-if>
+    <sc-if value="{{ charterHasError }}" hint-placeholder-val="{{ false }}"><div style="margin-top:12px;background:#FBE4E4;color:#9B2C2C;border-radius:10px;padding:10px 12px;font-size:12px">{{ charterError }}</div></sc-if>
+    <div style="display:flex;justify-content:flex-end;gap:9px;margin-top:18px"><button sc-camel-on-click="{{ closeCharter }}" style="border:1px solid #D6DCE2;background:#fff;color:#3A4756;border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer">Cancelar</button><button sc-camel-on-click="{{ confirmCharter }}" style="border:none;background:#05BE50;color:#062B14;border-radius:999px;padding:9px 17px;font-weight:700;cursor:pointer">{{ charterConfirmLabel }}</button></div>
+  </div>
+</sc-if>
+
+`;
     const historyPanel = `<sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
   <div sc-camel-on-click="{{ closeHistory }}" style="position:fixed;inset:0;background:rgba(15,25,35,.28);z-index:80"></div>
   <aside style="position:fixed;top:0;right:0;bottom:0;width:480px;max-width:94vw;background:#fff;z-index:81;box-shadow:-8px 0 40px rgba(0,0,0,.16);display:flex;flex-direction:column;animation:ibslide .18s ease">
@@ -651,7 +664,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 </sc-if>
 
 `;
-    template = template.replace(projectPanelAnchor, taskEditorPanel + historyPanel + projectPanelAnchor);
+    template = template.replace(projectPanelAnchor, taskEditorPanel + charterPanel + historyPanel + projectPanelAnchor);
     template = template.replace(
       '<button sc-camel-on-click="{{ closePanel }}" style="width:30px;height:30px;',
       '<button sc-camel-on-click="{{ panel.openHistory }}" style="border:1px solid #D6DCE2;background:#fff;color:#3A4756;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Historial</button><button sc-camel-on-click="{{ closePanel }}" style="width:30px;height:30px;'
@@ -768,11 +781,46 @@ document.addEventListener('DOMContentLoaded', async function() {
     );
     template = template.replace(
       "      view: 'dashboard', fEstado: [], fAsignado: [], fPeriodo: [],",
-      "      currentUser:(()=>{try{return JSON.parse(localStorage.getItem('digital-workspace-user'))}catch(e){return null}})(), historyOpen:false, historyProjectId:null, historyRows:[], historyLoading:false, historyError:false, syncBackendError:false,\n      view: 'dashboard', fEstado: [], fAsignado: [], fPeriodo: [],"
+      "      currentUser:(()=>{try{return JSON.parse(localStorage.getItem('digital-workspace-user'))}catch(e){return null}})(), historyOpen:false, historyProjectId:null, historyRows:[], historyLoading:false, historyError:false, syncBackendError:false, charterConfirmOpen:false, charterProjectId:null, charterProjectName:'', charterSummary:[], charterMissing:[], charterExporting:false, charterError:'',\n      view: 'dashboard', fEstado: [], fAsignado: [], fPeriodo: [],"
     );
     template = template.replace(
       '  componentDidMount() {',
-      `  openProjectHistory(projectId) {
+      `  openProjectCharter(project) {
+    const stakeholders=Array.isArray(project.stakeholders)?project.stakeholders:[];
+    const sponsor=stakeholders.find(x=>String(x.rol||'').toLowerCase().includes('sponsor'));
+    const missing=[];
+    if(!(project.tituloEjecutivo||project.nombre))missing.push('Nombre del proyecto');
+    if(!sponsor||!sponsor.persona)missing.push('Sponsor');
+    if(!project.asignado)missing.push('Gerente de proyecto');
+    if(!project.inicio)missing.push('Fecha de inicio');
+    if(!project.fin)missing.push('Fecha de conclusión');
+    if(!(project.descripcionEjecutiva||project.descripcion))missing.push('Descripción');
+    if(!project.objetivo)missing.push('Objetivos');
+    if(!project.alcance)missing.push('Alcance');
+    if(!stakeholders.length)missing.push('Stakeholders');
+    if(!(project.riesgos||[]).filter(Boolean).length)missing.push('Riesgos iniciales');
+    if(!project.presupuestoNA&&!project.presupuestoMonto)missing.push('Presupuesto estimado');
+    this.setState({charterConfirmOpen:true,charterProjectId:project.id,charterProjectName:project.tituloEjecutivo||project.nombre||'Proyecto',charterSummary:[
+      'Sponsor: '+(sponsor&&sponsor.persona?sponsor.persona:'Por definir'),
+      'Gerente: '+(project.asignado||'Por definir'),
+      'Periodo: '+(project.inicio||'Por definir')+' — '+(project.fin||'Por definir'),
+      'Cronograma: '+((project.tareas||[]).length)+' tareas',
+      'Stakeholders: '+stakeholders.length,
+      'Riesgos: '+((project.riesgos||[]).filter(Boolean).length)
+    ],charterMissing:missing,charterError:''});
+  }
+  closeProjectCharter(){if(!this.state.charterExporting)this.setState({charterConfirmOpen:false,charterError:''});}
+  confirmProjectCharter(){
+    const id=this.state.charterProjectId;
+    this.setState({charterExporting:true,charterError:''});
+    fetch('/api/project-charter?projectId='+encodeURIComponent(id)).then(r=>{if(!r.ok)throw new Error('export_failed');const cd=r.headers.get('Content-Disposition')||'';return r.blob().then(blob=>({blob,cd}))}).then(({blob,cd})=>{
+      const match=cd.match(/filename\*=UTF-8''([^;]+)/i)||cd.match(/filename="?([^";]+)"?/i);const name=match?decodeURIComponent(match[1]):'Project_Charter.docx';
+      const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      this.setState({charterExporting:false,charterConfirmOpen:false});
+    }).catch(()=>this.setState({charterExporting:false,charterError:'No se pudo generar el documento. Verifica la conexión con el backend.'}));
+  }
+
+  openProjectHistory(projectId) {
     this.setState({historyOpen:true,historyProjectId:projectId,historyRows:[],historyLoading:true,historyError:false});
     fetch('/api/project-history?projectId='+encodeURIComponent(projectId)).then(r=>{if(!r.ok)throw new Error('history_failed');return r.json()}).then(data=>{
       this.setState({historyRows:data&&Array.isArray(data.history)?data.history:[],historyLoading:false,historyError:false});
@@ -792,6 +840,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace(
       '      isPanel: !!panel, panel, closePanel:()=>this.setState({openId:null}),',
       `      isPanel: !!panel, panel, closePanel:()=>this.setState({openId:null}),
+      isCharterConfirm:st.charterConfirmOpen, charterProjectName:st.charterProjectName, charterSummary:st.charterSummary||[], charterHasMissing:(st.charterMissing||[]).length>0, charterMissingLabel:(st.charterMissing||[]).join(', '), charterHasError:!!st.charterError, charterError:st.charterError, charterConfirmLabel:st.charterExporting?'Generando…':'Continuar y exportar', closeCharter:()=>this.closeProjectCharter(), confirmCharter:()=>{if(!st.charterExporting)this.confirmProjectCharter()},
       isHistory:st.historyOpen, historyLoading:st.historyLoading, historyError:st.historyError, historyEmpty:!st.historyLoading && !st.historyError && (st.historyRows||[]).length===0, closeHistory:()=>this.closeProjectHistory(),
       historyRows:(st.historyRows||[]).map(h=>({
         title:h.action==='CREATE'?'Creación':h.action==='DELETE'?'Eliminación':'Actualización de '+(h.field||'registro'),
