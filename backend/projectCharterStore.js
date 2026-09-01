@@ -166,13 +166,19 @@ function buildDocument(project, originalXml) {
   for (const task of (project.tareas || [])) ganttRows.push([task.nombre || 'Tarea', formatDate(task.inicio), formatDate(task.fin), task.asignado || project.asignado || '—']);
   const risks = Array.isArray(project.riesgos) ? project.riesgos.filter((item) => typeof item === 'string' ? item.trim() : item && String(item.riesgo || item.text || '').trim()) : [];
   const riskRows = [['Riesgo potencial', 'Propuesta de mitigación de riesgo']].concat(risks.length ? risks.map(riskRow) : [['Por definir', 'Por definir']]);
+  const objectives = (Array.isArray(project.objetivos) && project.objetivos.length
+    ? project.objetivos.map((item) => typeof item === 'string' ? item : item && (item.texto || item.objetivo))
+    : String(project.objetivo || '').split(/\n+/))
+    .map((item) => String(item || '').trim()).filter(Boolean);
+  const objectiveParagraphs = (objectives.length ? objectives : ['Por definir'])
+    .map((item) => paragraph(`• ${item}`, { after: 55 })).join('');
   const sect = (originalXml.match(/<w:sectPr[\s\S]*?<\/w:sectPr>/) || ['<w:sectPr/>'])[0];
 
   const body = [
     paragraph('PROJECT CHARTER', { bold: true, color: '0070C0', size: 38, align: 'center', after: 260 }),
     heading('Visión general del proyecto', '44E44C'), table(overview, [3300, 5900], false),
     heading('Descripción del proyecto'), paragraph(project.descripcionEjecutiva || project.descripcion || 'Por definir'),
-    heading('Objetivos'), paragraph(project.objetivo || 'Por definir'),
+    heading('Objetivos'), objectiveParagraphs,
     heading('Alcance preliminar del proyecto'), paragraph(project.alcance || 'Por definir'),
     heading('Cronograma General'), table(ganttRows, [3600, 1600, 1600, 2200]),
     heading('Stakeholders'), table(teamRows, [2800, 2200, 4000]),

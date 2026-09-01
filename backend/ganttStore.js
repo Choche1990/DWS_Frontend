@@ -220,6 +220,20 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
           auditEntries.push({ action: 'UPDATE', entityType: 'project', entityId: project.id, projectId: project.id, field, oldValue: previousProject[field], newValue: projectRow[field] });
         }
       }
+      const previousExtra = safeJsonParse(previousProject.extra, {});
+      const currentExtra = safeJsonParse(projectRow.extra, {});
+      const trackedExtraFields = {
+        objetivos: 'Objetivos', entregables: 'Entregables', stakeholders: 'Stakeholders',
+        alcance: 'Alcance', presupuestoNA: 'Presupuesto', presupuestoMonto: 'Monto de presupuesto',
+        presupuestoMoneda: 'Moneda de presupuesto',
+      };
+      for (const [key, label] of Object.entries(trackedExtraFields)) {
+        const oldValue = JSON.stringify(previousExtra[key] == null ? '' : previousExtra[key]);
+        const newValue = JSON.stringify(currentExtra[key] == null ? '' : currentExtra[key]);
+        if (oldValue !== newValue) {
+          auditEntries.push({ action: 'UPDATE', entityType: 'project', entityId: project.id, projectId: project.id, field: label, oldValue, newValue });
+        }
+      }
     }
     const tareas = Array.isArray(project.tareas) ? project.tareas : [];
     for (const task of tareas) {

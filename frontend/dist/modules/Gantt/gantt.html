@@ -154,9 +154,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const detailMetricsAnchor = '      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">';
     const projectContextBlock = `      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
         <div style="background:#fff;border:1px solid #E6EAEE;border-radius:16px;padding:18px 20px;box-shadow:0 4px 20px rgba(0,0,0,.04)">
-          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Objetivo</div>
-          <textarea rows="4" maxlength="500" style="width:100%;resize:vertical;border:1px solid #E6EAEE;border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.5;font-family:inherit;color:#1B2733" placeholder="¿Qué resultado busca lograr el proyecto?" value="{{ sel.objetivo }}" sc-camel-on-input="{{ sel.onObjetivo }}"></textarea>
-          <div style="text-align:right;font-size:10.5px;color:#A0AAB4;margin-top:3px">{{ sel.objLen }}/{{ sel.contextMax }}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px"><div><div style="font-size:14px;font-weight:600">Objetivos</div><div style="font-size:10.5px;color:#8A95A1;margin-top:2px">Resultados que busca lograr el proyecto</div></div><button sc-camel-on-click="{{ sel.openObjectives }}" title="Abrir seguimiento de objetivos" style="border:1px solid #B9E5C9;background:#E3F7EC;color:#00792F;border-radius:999px;padding:5px 9px;font-size:9.5px;font-weight:800;cursor:pointer;white-space:nowrap">Seguimiento</button></div>
+          <div style="display:flex;flex-direction:column;gap:7px;max-height:175px;overflow-y:auto;padding-right:2px"><sc-for list="{{ sel.objectiveRows }}" as="obj" hint-placeholder-count="2"><div style="display:flex;align-items:flex-start;gap:7px;background:#F7F9FA;border:1px solid #EEF0F2;border-radius:9px;padding:7px 8px"><span style="color:#05BE50;font-size:18px;line-height:18px;font-weight:800">•</span><textarea rows="2" maxlength="500" class="ib-cell" style="flex:1;min-width:0;resize:vertical;border:none;background:transparent;padding:1px;font-size:12px;line-height:1.4" placeholder="Describe un objetivo" value="{{ obj.texto }}" sc-camel-on-change="{{ obj.onTexto }}"></textarea><button sc-camel-on-click="{{ obj.onRemove }}" class="ib-del-btn" title="Eliminar objetivo" style="width:20px;height:20px;border:none;background:none;color:#B23B3B;cursor:pointer;flex:none">×</button></div></sc-for><sc-if value="{{ sel.objectivesEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:12px;text-align:center;color:#A0AAB4;font-size:11px;border:1px dashed #D6DCE2;border-radius:9px">Agrega el primer objetivo del proyecto.</div></sc-if></div>
+          <button sc-camel-on-click="{{ sel.addObjective }}" style="margin-top:8px;border:none;background:none;color:#00792F;font-size:10.5px;font-weight:700;cursor:pointer;padding:2px">+ Agregar objetivo</button>
         </div>
         <div style="background:#fff;border:1px solid #E6EAEE;border-radius:16px;padding:18px 20px;box-shadow:0 4px 20px rgba(0,0,0,.04)">
           <div style="font-size:14px;font-weight:600;margin-bottom:8px">Alcance</div>
@@ -206,6 +206,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         <div style="overflow-x:auto;border:1px solid #EEF0F2;border-radius:12px"><div style="min-width:1000px"><div style="display:flex;border-bottom:1px solid #F0F2F4;background:#FAFBFC"><div style="width:280px;min-width:280px;padding:10px 14px;font-size:11px;font-weight:600;color:#8A95A1">Proyecto / tarea</div><div style="flex:1;position:relative;display:flex"><sc-for list="{{ sel.roadmapMonths }}" as="m" hint-placeholder-count="12"><div style="{{ m.headerStyle }}">{{ m.label }}</div></sc-for></div></div><div style="position:relative"><sc-for list="{{ sel.roadmapGanttRows }}" as="r" hint-placeholder-count="5"><sc-if value="{{ r.isProj }}" hint-placeholder-val="{{ true }}"><div style="display:flex;align-items:center;border-bottom:1px solid #F5F6F8"><div style="width:280px;min-width:280px;padding:8px 14px;display:flex;align-items:center;gap:8px"><span style="{{ r.estDotStyle }}"></span><span style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.nombre }}</span><span style="flex:1"></span><span style="{{ r.avatarStyle }}">{{ r.initials }}</span></div><div style="flex:1;position:relative;height:38px"><sc-for list="{{ sel.roadmapMonths }}" as="m" hint-placeholder-count="12"><div style="{{ m.gridStyle }}"></div></sc-for><div style="{{ r.barStyle }}"><div style="{{ r.fillStyle }}"></div><span style="{{ r.labelStyle }}">{{ r.avance }}%</span></div></div></div></sc-if><sc-if value="{{ r.isTask }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;border-bottom:1px solid #F7F8FA;background:#FCFDFD"><div style="width:280px;min-width:280px;padding:6px 14px 6px 38px;display:flex;align-items:center;gap:7px"><span style="width:5px;height:5px;border-radius:50%;background:#B4BEC8"></span><span style="font-size:12px;color:#4A5763;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.nombre }}</span><span style="flex:1"></span><span style="font-size:10.5px;color:#A0AAB4;font-weight:600">{{ r.pesoLabel }}</span></div><div style="flex:1;position:relative;height:28px"><sc-for list="{{ sel.roadmapMonths }}" as="m" hint-placeholder-count="12"><div style="{{ m.gridStyle }}"></div></sc-for><div style="{{ r.barStyle }}"><div style="{{ r.fillStyle }}"></div><div style="{{ r.markStyle }}"></div></div></div></div></sc-if></sc-for><div style="{{ sel.roadmapTodayStyle }}"><div style="position:absolute;top:-1px;left:-4px;width:9px;height:9px;border-radius:50%;background:#0039A6"></div></div></div></div></div>
       </div>
 
+      <div style="background:#fff;border:1px solid #E6EAEE;border-radius:16px;padding:20px 22px;box-shadow:0 4px 20px rgba(0,0,0,.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px"><div><div style="font-size:14px;font-weight:600">Entregables del proyecto</div><div style="font-size:11px;color:#8A95A1;margin-top:2px">Registro de entrega, aprobación y comentarios</div></div><button sc-camel-on-click="{{ sel.addDeliverable }}" style="background:#062B14;color:#fff;border:none;border-radius:999px;padding:7px 13px;font-size:11px;font-weight:700;cursor:pointer">+ Agregar entregable</button></div>
+        <sc-if value="{{ sel.hasDeliverables }}" hint-placeholder-val="{{ true }}"><div style="overflow-x:auto"><div style="min-width:850px"><div style="display:grid;grid-template-columns:1.35fr .7fr 1fr 1.5fr 28px;gap:9px;padding:0 8px 7px;font-size:9.5px;font-weight:800;color:#8A95A1;text-transform:uppercase"><span>Entregable</span><span>Fecha de entrega</span><span>Aprobado por</span><span>Comentarios</span><span></span></div><sc-for list="{{ sel.deliverableRows }}" as="del" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:1.35fr .7fr 1fr 1.5fr 28px;gap:9px;align-items:start;padding:9px 8px;border-top:1px solid #F0F2F4;background:{{ del.rowBackground }}"><input class="ib-cell" style="width:100%;font-size:12px;font-weight:600" placeholder="Nombre del entregable" value="{{ del.nombre }}" sc-camel-on-change="{{ del.onNombre }}"><input class="ib-cell" type="date" style="width:100%;font-size:11.5px" value="{{ del.fechaEntrega }}" sc-camel-on-change="{{ del.onFechaEntrega }}"><input class="ib-cell" style="width:100%;font-size:12px" placeholder="Persona que aprobó" value="{{ del.aprobadoPor }}" sc-camel-on-change="{{ del.onAprobadoPor }}"><textarea class="ib-cell" rows="2" style="width:100%;font-size:11.5px;line-height:1.4;resize:vertical" placeholder="Observaciones o comentarios" value="{{ del.comentarios }}" sc-camel-on-change="{{ del.onComentarios }}"></textarea><button sc-camel-on-click="{{ del.onRemove }}" class="ib-del-btn" title="Eliminar entregable" style="width:26px;height:26px;border:none;background:none;color:#B23B3B;cursor:pointer">×</button></div></sc-for></div></div></sc-if>
+        <sc-if value="{{ sel.deliverablesEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:20px;text-align:center;color:#A0AAB4;font-size:12px;border:1px dashed #D6DCE2;border-radius:11px;background:#FAFBFC">Aún no se han registrado entregables.</div></sc-if>
+      </div>
+
 `;
     template = template.replace(detailMetricsAnchor, projectContextBlock + detailMetricsAnchor);
     // Evita duplicar los antiguos bloques de descripción/objetivo, ahora ubicados al inicio.
@@ -215,7 +221,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const oldContextEndAt = template.indexOf(oldContextEnd, oldContextAt);
     if (oldContextAt >= 0 && oldContextEndAt > oldContextAt) template = template.slice(0, oldContextAt) + template.slice(oldContextEndAt);
 
-    // Jerarquía de la ficha: contexto → responsables → roadmap → proceso → indicadores.
+    // Jerarquía de la ficha: contexto → responsables → roadmap → entregables → proceso → indicadores.
     const processStart = template.indexOf(oldContextEnd);
     const processNextAnchor = '      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">\n        <div style="background:#fff;border:1px solid #E6EAEE;border-radius:16px;padding:18px 20px;box-shadow:0 4px 20px rgba(0,0,0,.04)">\n          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Próximos pasos</div>';
     const processEnd = template.indexOf(processNextAnchor, processStart);
@@ -236,7 +242,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // Los riesgos antiguos guardados como texto se migran de forma compatible.
     template = template.replace(
       '  const riesgosArr = rp.riesgos || [];',
-      "  const riesgosArr = (rp.riesgos || []).map(x => typeof x === 'string' ? {riesgo:x,mitigacion:''} : {riesgo:x.riesgo||x.text||'',mitigacion:x.mitigacion||''});"
+      `  const riesgosArr = (rp.riesgos || []).map(x => typeof x === 'string' ? {riesgo:x,mitigacion:''} : {riesgo:x.riesgo||x.text||'',mitigacion:x.mitigacion||''});
+  const objetivosArr = (Array.isArray(rp.objetivos) && rp.objetivos.length ? rp.objetivos : String(rp.objetivo || '').split(/\\n+/).filter(Boolean).map(texto => ({texto}))).map(x => typeof x === 'string' ? {texto:x,resultadoEsperado:'',resultadoObtenido:'',estado:''} : {texto:x.texto||x.objetivo||'',resultadoEsperado:x.resultadoEsperado||'',resultadoObtenido:x.resultadoObtenido||'',estado:x.estado||''});
+  const entregablesArr = (Array.isArray(rp.entregables) ? rp.entregables : []).map(x => ({nombre:x.nombre||'',fechaEntrega:x.fechaEntrega||'',aprobadoPor:x.aprobadoPor||'',comentarios:x.comentarios||''}));`
     );
     template = template.replace(
       `    riesgosRows: riesgosArr.map((txt, i) => ({
@@ -247,7 +255,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     riesgosEmpty: riesgosArr.length === 0,
     addRiesgo: () => this.update(rp.id, { riesgos: [...riesgosArr, ''] }),`,
       `    riesgosRows: riesgosArr.map((item, i) => ({
-      riesgo: item.riesgo || '', mitigacion: item.mitigacion || '',
+      number: i + 1, riesgo: item.riesgo || '', mitigacion: item.mitigacion || '',
       onRiesgo: ev => { const arr = riesgosArr.slice(); arr[i] = {...arr[i],riesgo:ev.target.value}; this.update(rp.id, { riesgos: arr }); },
       onMitigacion: ev => { const arr = riesgosArr.slice(); arr[i] = {...arr[i],mitigacion:ev.target.value}; this.update(rp.id, { riesgos: arr }); },
       onRemove: () => { const arr = riesgosArr.filter((_, ix) => ix !== i); this.update(rp.id, { riesgos: arr }); },
@@ -261,10 +269,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <input class="ib-cell" style="flex:1;font-size:13px" value="{{ rg.text }}" sc-camel-on-change="{{ rg.onText }}" placeholder="Riesgo">
                 <button sc-camel-on-click="{{ rg.onRemove }}" class="ib-del-btn" style="width:18px;height:18px;border-radius:6px;border:none;background:none;color:#C7CDD3;cursor:pointer;flex:none">×</button>
               </div>`,
-      `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 24px;align-items:start;gap:8px;background:#FAFBFC;border:1px solid #EEF0F2;border-radius:10px;padding:8px">
-                <textarea class="ib-cell" rows="2" style="width:100%;font-size:12px;line-height:1.4;resize:vertical;background:#fff;border:1px solid #E6EAEE" value="{{ rg.riesgo }}" sc-camel-on-change="{{ rg.onRiesgo }}" placeholder="Riesgo potencial"></textarea>
-                <textarea class="ib-cell" rows="2" style="width:100%;font-size:12px;line-height:1.4;resize:vertical;background:#fff;border:1px solid #E6EAEE" value="{{ rg.mitigacion }}" sc-camel-on-change="{{ rg.onMitigacion }}" placeholder="Propuesta de mitigación"></textarea>
-                <button sc-camel-on-click="{{ rg.onRemove }}" class="ib-del-btn" style="width:22px;height:22px;border-radius:6px;border:none;background:none;color:#C7CDD3;cursor:pointer;flex:none">×</button>
+      `<div style="display:grid;grid-template-columns:34px minmax(0,1fr) minmax(0,1fr) 24px;align-items:start;gap:9px;background:linear-gradient(110deg,#FFF8F7 0%,#FFFFFF 48%,#F3FBF6 100%);border:1px solid #E8E1DF;border-left:4px solid #B23B3B;border-radius:12px;padding:10px;box-shadow:0 3px 12px rgba(38,53,45,.05)">
+                <span style="width:30px;height:30px;border-radius:9px;background:#FBE4E4;color:#B23B3B;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800">{{ rg.number }}</span>
+                <label style="font-size:9.5px;color:#9B2C2C;font-weight:800;text-transform:uppercase;letter-spacing:.03em">Riesgo potencial<textarea class="ib-cell" rows="3" style="width:100%;margin-top:5px;font-size:12px;line-height:1.4;resize:vertical;background:#fff;border:1px solid #E8D6D3;border-radius:9px" value="{{ rg.riesgo }}" sc-camel-on-change="{{ rg.onRiesgo }}" placeholder="Describe el evento y su posible impacto"></textarea></label>
+                <label style="font-size:9.5px;color:#00792F;font-weight:800;text-transform:uppercase;letter-spacing:.03em">Propuesta de mitigación<textarea class="ib-cell" rows="3" style="width:100%;margin-top:5px;font-size:12px;line-height:1.4;resize:vertical;background:#F8FDF9;border:1px solid #CDEEDB;border-radius:9px" value="{{ rg.mitigacion }}" sc-camel-on-change="{{ rg.onMitigacion }}" placeholder="Indica cómo reducir o responder al riesgo"></textarea></label>
+                <button sc-camel-on-click="{{ rg.onRemove }}" class="ib-del-btn" title="Eliminar riesgo" style="width:22px;height:22px;border-radius:6px;border:none;background:none;color:#B23B3B;cursor:pointer;flex:none">×</button>
               </div>`
     );
     template = template.replace(
@@ -290,6 +299,31 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const detailLogicAnchor = "    objLen: (rp.objetivo || '').length, objMax: 300,";
     const detailLogic = `    objLen: (rp.objetivo || '').length, objMax: 500, contextMax: 500,
+    objectiveRows: objetivosArr.map((item, idx) => ({
+      texto:item.texto,
+      onTexto:ev=>{const a=objetivosArr.slice();a[idx]={...a[idx],texto:ev.target.value};this.update(rp.id,{objetivos:a,objetivo:a.map(x=>x.texto).filter(Boolean).join(' • ')});},
+      onRemove:()=>{const a=objetivosArr.filter((_,i)=>i!==idx);this.update(rp.id,{objetivos:a,objetivo:a.map(x=>x.texto).filter(Boolean).join(' • ')});}
+    })),
+    objectivesEmpty:objetivosArr.length===0,
+    addObjective:()=>{const a=[...objetivosArr,{texto:'',resultadoEsperado:'',resultadoObtenido:'',estado:''}];this.update(rp.id,{objetivos:a,objetivo:a.map(x=>x.texto).filter(Boolean).join(' • ')});},
+    openObjectives:()=>this.setState({objectivePanelOpen:true}),
+    objectiveTrackingRows:objetivosArr.map((item,idx)=>({
+      number:idx+1,texto:item.texto||'Objetivo sin descripción',resultadoEsperado:item.resultadoEsperado||'',resultadoObtenido:item.resultadoObtenido||'',estado:item.estado||'',
+      statusStyle:'border-radius:999px;padding:7px 10px;font-size:11px;font-weight:700;border:1px solid '+(item.estado==='Cumplido'?'#B9E5C9':item.estado==='Parcial'?'#F1D29E':item.estado==='No cumplido'?'#E8B8B8':'#D6DCE2')+';background:'+(item.estado==='Cumplido'?'#E3F7EC':item.estado==='Parcial'?'#FFF4E5':item.estado==='No cumplido'?'#FBE4E4':'#F7F9FA')+';color:'+(item.estado==='Cumplido'?'#00792F':item.estado==='Parcial'?'#8A4B12':item.estado==='No cumplido'?'#9B2C2C':'#6B7684'),
+      onResultadoEsperado:ev=>{const a=objetivosArr.slice();a[idx]={...a[idx],resultadoEsperado:ev.target.value};this.update(rp.id,{objetivos:a,objetivo:a.map(x=>x.texto).filter(Boolean).join(' • ')});},
+      onResultadoObtenido:ev=>{const a=objetivosArr.slice();a[idx]={...a[idx],resultadoObtenido:ev.target.value};this.update(rp.id,{objetivos:a,objetivo:a.map(x=>x.texto).filter(Boolean).join(' • ')});},
+      onEstado:ev=>{const a=objetivosArr.slice();a[idx]={...a[idx],estado:ev.target.value};this.update(rp.id,{objetivos:a,objetivo:a.map(x=>x.texto).filter(Boolean).join(' • ')});}
+    })),
+    deliverableRows:entregablesArr.map((item,idx)=>({
+      ...item,rowBackground:idx%2?'#FCFDFD':'#FFFFFF',
+      onNombre:ev=>{const a=entregablesArr.slice();a[idx]={...a[idx],nombre:ev.target.value};this.update(rp.id,{entregables:a});},
+      onFechaEntrega:ev=>{const a=entregablesArr.slice();a[idx]={...a[idx],fechaEntrega:ev.target.value};this.update(rp.id,{entregables:a});},
+      onAprobadoPor:ev=>{const a=entregablesArr.slice();a[idx]={...a[idx],aprobadoPor:ev.target.value};this.update(rp.id,{entregables:a});},
+      onComentarios:ev=>{const a=entregablesArr.slice();a[idx]={...a[idx],comentarios:ev.target.value};this.update(rp.id,{entregables:a});},
+      onRemove:()=>this.update(rp.id,{entregables:entregablesArr.filter((_,i)=>i!==idx)})
+    })),
+    hasDeliverables:entregablesArr.length>0, deliverablesEmpty:entregablesArr.length===0,
+    addDeliverable:()=>this.update(rp.id,{entregables:[...entregablesArr,{nombre:'',fechaEntrega:'',aprobadoPor:'',comentarios:''}]}),
     alcance: rp.alcance || '',
     onAlcance: ev => { this.update(rp.id, { alcance: ev.target.value }); ev.target.style.height='auto'; ev.target.style.height=ev.target.scrollHeight+'px'; },
     alcanceLen: (rp.alcance || '').length,
@@ -685,6 +719,15 @@ document.addEventListener('DOMContentLoaded', async function() {
 </sc-if>
 
 `;
+    const objectivePanel = `<sc-if value="{{ isObjectivePanel }}" hint-placeholder-val="{{ false }}">
+  <div sc-camel-on-click="{{ closeObjectivePanel }}" style="position:fixed;inset:0;background:rgba(15,25,35,.30);z-index:84"></div>
+  <aside style="position:fixed;top:0;right:0;bottom:0;width:650px;max-width:96vw;background:#F7F9FA;z-index:85;box-shadow:-10px 0 45px rgba(0,0,0,.18);display:flex;flex-direction:column;animation:ibslide .18s ease">
+    <div style="padding:20px 22px;background:#fff;border-bottom:1px solid #E6EAEE;display:flex;align-items:center;gap:12px"><div style="width:38px;height:38px;border-radius:12px;background:#E3F7EC;color:#00792F;display:flex;align-items:center;justify-content:center;font-weight:900">✓</div><div style="flex:1"><div style="font-size:11px;color:#00792F;text-transform:uppercase;font-weight:800">Evaluación del proyecto</div><div style="font-size:18px;font-weight:700;margin-top:2px">Seguimiento de objetivos</div></div><button sc-camel-on-click="{{ closeObjectivePanel }}" style="width:31px;height:31px;border:none;border-radius:8px;background:#F1F3F5;cursor:pointer">×</button></div>
+    <div style="flex:1;overflow-y:auto;padding:18px 20px"><sc-if value="{{ objectivesTrackingEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:32px;text-align:center;color:#8A95A1;background:#fff;border:1px dashed #D6DCE2;border-radius:14px">Primero agrega objetivos en la ficha del proyecto.</div></sc-if><sc-for list="{{ objectiveTrackingRows }}" as="goal" hint-placeholder-count="2"><div style="background:#fff;border:1px solid #E6EAEE;border-radius:15px;padding:16px 17px;margin-bottom:13px;box-shadow:0 4px 16px rgba(38,53,45,.05)"><div style="display:flex;align-items:flex-start;gap:10px"><span style="width:28px;height:28px;border-radius:9px;background:#062B14;color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex:none">{{ goal.number }}</span><div style="flex:1;font-size:13px;font-weight:700;line-height:1.45;color:#26352D;padding-top:3px">{{ goal.texto }}</div><sc-raw-select value="{{ goal.estado }}" sc-camel-on-change="{{ goal.onEstado }}" style="{{ goal.statusStyle }}"><option value="">Sin evaluar</option><option value="Cumplido">Cumplido</option><option value="Parcial">Parcial</option><option value="No cumplido">No cumplido</option></sc-raw-select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:13px"><label style="font-size:10px;color:#00792F;font-weight:800;text-transform:uppercase">Resultado esperado<textarea class="ib-cell" rows="4" style="width:100%;margin-top:6px;resize:vertical;line-height:1.45;background:#F8FDF9;border:1px solid #CDEEDB;border-radius:10px" placeholder="¿Qué debería conseguirse?" value="{{ goal.resultadoEsperado }}" sc-camel-on-change="{{ goal.onResultadoEsperado }}"></textarea></label><label style="font-size:10px;color:#0039A6;font-weight:800;text-transform:uppercase">Resultado obtenido<textarea class="ib-cell" rows="4" style="width:100%;margin-top:6px;resize:vertical;line-height:1.45;background:#F7FAFF;border:1px solid #C9D9F5;border-radius:10px" placeholder="¿Qué se consiguió realmente?" value="{{ goal.resultadoObtenido }}" sc-camel-on-change="{{ goal.onResultadoObtenido }}"></textarea></label></div></div></sc-for></div>
+  </aside>
+</sc-if>
+
+`;
     const historyPanel = `<sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
   <div sc-camel-on-click="{{ closeHistory }}" style="position:fixed;inset:0;background:rgba(15,25,35,.28);z-index:80"></div>
   <aside style="position:fixed;top:0;right:0;bottom:0;width:480px;max-width:94vw;background:#fff;z-index:81;box-shadow:-8px 0 40px rgba(0,0,0,.16);display:flex;flex-direction:column;animation:ibslide .18s ease">
@@ -699,7 +742,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 </sc-if>
 
 `;
-    template = template.replace(projectPanelAnchor, taskEditorPanel + charterPanel + historyPanel + projectPanelAnchor);
+    template = template.replace(projectPanelAnchor, taskEditorPanel + charterPanel + objectivePanel + historyPanel + projectPanelAnchor);
     template = template.replace(
       '<button sc-camel-on-click="{{ closePanel }}" style="width:30px;height:30px;',
       '<button sc-camel-on-click="{{ panel.openHistory }}" style="border:1px solid #D6DCE2;background:#fff;color:#3A4756;border-radius:8px;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap">Historial</button><button sc-camel-on-click="{{ closePanel }}" style="width:30px;height:30px;'
@@ -816,7 +859,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     );
     template = template.replace(
       "      view: 'dashboard', fEstado: [], fAsignado: [], fPeriodo: [],",
-      "      currentUser:(()=>{try{return JSON.parse(localStorage.getItem('digital-workspace-user'))}catch(e){return null}})(), historyOpen:false, historyProjectId:null, historyRows:[], historyLoading:false, historyError:false, syncBackendError:false, charterConfirmOpen:false, charterProjectId:null, charterProjectName:'', charterSummary:[], charterMissing:[], charterExporting:false, charterError:'',\n      view: 'dashboard', fEstado: [], fAsignado: [], fPeriodo: [],"
+      "      currentUser:(()=>{try{return JSON.parse(localStorage.getItem('digital-workspace-user'))}catch(e){return null}})(), historyOpen:false, historyProjectId:null, historyRows:[], historyLoading:false, historyError:false, syncBackendError:false, charterConfirmOpen:false, charterProjectId:null, charterProjectName:'', charterSummary:[], charterMissing:[], charterExporting:false, charterError:'', objectivePanelOpen:false,\n      view: 'dashboard', fEstado: [], fAsignado: [], fPeriodo: [],"
     );
     template = template.replace(
       '  componentDidMount() {',
@@ -831,7 +874,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if(!project.inicio)missing.push('Fecha de inicio');
     if(!project.fin)missing.push('Fecha de conclusión');
     if(!(project.descripcionEjecutiva||project.descripcion))missing.push('Descripción');
-    if(!project.objetivo)missing.push('Objetivos');
+    if(!project.objetivo&&!(Array.isArray(project.objetivos)&&project.objetivos.some(x=>String(typeof x==='string'?x:(x&&x.texto)||'').trim())))missing.push('Objetivos');
     if(!project.alcance)missing.push('Alcance');
     if(!stakeholders.length)missing.push('Stakeholders');
     if(!meaningfulRisks.length)missing.push('Riesgos iniciales');
@@ -877,6 +920,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       '      isPanel: !!panel, panel, closePanel:()=>this.setState({openId:null}),',
       `      isPanel: !!panel, panel, closePanel:()=>this.setState({openId:null}),
       isCharterConfirm:st.charterConfirmOpen, charterProjectName:st.charterProjectName, charterSummary:st.charterSummary||[], charterHasMissing:(st.charterMissing||[]).length>0, charterMissingLabel:(st.charterMissing||[]).join(', '), charterHasError:!!st.charterError, charterError:st.charterError, charterConfirmLabel:st.charterExporting?'Generando…':'Continuar y exportar', closeCharter:()=>this.closeProjectCharter(), confirmCharter:()=>{if(!st.charterExporting)this.confirmProjectCharter()},
+      isObjectivePanel:st.objectivePanelOpen, objectiveTrackingRows:(sel&&sel.objectiveTrackingRows)||[], objectivesTrackingEmpty:!sel||!(sel.objectiveTrackingRows||[]).length, closeObjectivePanel:()=>this.setState({objectivePanelOpen:false}),
       isHistory:st.historyOpen, historyLoading:st.historyLoading, historyError:st.historyError, historyEmpty:!st.historyLoading && !st.historyError && (st.historyRows||[]).length===0, closeHistory:()=>this.closeProjectHistory(),
       historyRows:(st.historyRows||[]).map(h=>({
         title:h.action==='CREATE'?'Creación':h.action==='DELETE'?'Eliminación':'Actualización de '+(h.field||'registro'),
