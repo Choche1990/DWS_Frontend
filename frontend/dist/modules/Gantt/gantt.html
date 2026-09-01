@@ -232,6 +232,41 @@ document.addEventListener('DOMContentLoaded', async function() {
       '<span style="font-size:12.5px;color:#6B7684">Solicitado por <b style="color:#3A4756">{{ sel.solicitante }}</b></span>',
       '<div style="display:flex;flex-direction:column;gap:3px;min-width:120px"><span style="font-size:10px;line-height:1;color:#8A95A1;text-transform:uppercase;font-weight:600">Solicitado por</span><span style="height:20px;display:flex;align-items:center;font-size:12px;line-height:1.4;color:#3A4756;font-weight:600">{{ sel.solicitante }}</span></div>'
     );
+    // Cada riesgo conserva su propuesta de mitigacion en una relacion 1 a 1.
+    // Los riesgos antiguos guardados como texto se migran de forma compatible.
+    template = template.replace(
+      '  const riesgosArr = rp.riesgos || [];',
+      "  const riesgosArr = (rp.riesgos || []).map(x => typeof x === 'string' ? {riesgo:x,mitigacion:''} : {riesgo:x.riesgo||x.text||'',mitigacion:x.mitigacion||''});"
+    );
+    template = template.replace(
+      `    riesgosRows: riesgosArr.map((txt, i) => ({
+      text: txt,
+      onText: ev => { const arr = riesgosArr.slice(); arr[i] = ev.target.value; this.update(rp.id, { riesgos: arr }); },
+      onRemove: () => { const arr = riesgosArr.filter((_, ix) => ix !== i); this.update(rp.id, { riesgos: arr }); },
+    })),
+    riesgosEmpty: riesgosArr.length === 0,
+    addRiesgo: () => this.update(rp.id, { riesgos: [...riesgosArr, ''] }),`,
+      `    riesgosRows: riesgosArr.map((item, i) => ({
+      riesgo: item.riesgo || '', mitigacion: item.mitigacion || '',
+      onRiesgo: ev => { const arr = riesgosArr.slice(); arr[i] = {...arr[i],riesgo:ev.target.value}; this.update(rp.id, { riesgos: arr }); },
+      onMitigacion: ev => { const arr = riesgosArr.slice(); arr[i] = {...arr[i],mitigacion:ev.target.value}; this.update(rp.id, { riesgos: arr }); },
+      onRemove: () => { const arr = riesgosArr.filter((_, ix) => ix !== i); this.update(rp.id, { riesgos: arr }); },
+    })),
+    riesgosEmpty: riesgosArr.length === 0,
+    addRiesgo: () => this.update(rp.id, { riesgos: [...riesgosArr, {riesgo:'',mitigacion:''}] }),`
+    );
+    template = template.replace(
+      `<div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#B23B3B;font-weight:700;flex:none">•</span>
+                <input class="ib-cell" style="flex:1;font-size:13px" value="{{ rg.text }}" sc-camel-on-change="{{ rg.onText }}" placeholder="Riesgo">
+                <button sc-camel-on-click="{{ rg.onRemove }}" class="ib-del-btn" style="width:18px;height:18px;border-radius:6px;border:none;background:none;color:#C7CDD3;cursor:pointer;flex:none">×</button>
+              </div>`,
+      `<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 24px;align-items:start;gap:8px;background:#FAFBFC;border:1px solid #EEF0F2;border-radius:10px;padding:8px">
+                <textarea class="ib-cell" rows="2" style="width:100%;font-size:12px;line-height:1.4;resize:vertical;background:#fff;border:1px solid #E6EAEE" value="{{ rg.riesgo }}" sc-camel-on-change="{{ rg.onRiesgo }}" placeholder="Riesgo potencial"></textarea>
+                <textarea class="ib-cell" rows="2" style="width:100%;font-size:12px;line-height:1.4;resize:vertical;background:#fff;border:1px solid #E6EAEE" value="{{ rg.mitigacion }}" sc-camel-on-change="{{ rg.onMitigacion }}" placeholder="Propuesta de mitigación"></textarea>
+                <button sc-camel-on-click="{{ rg.onRemove }}" class="ib-del-btn" style="width:22px;height:22px;border-radius:6px;border:none;background:none;color:#C7CDD3;cursor:pointer;flex:none">×</button>
+              </div>`
+    );
     template = template.replace(
       '<div style="{{ sel.estPillStyle }}"><span style="{{ sel.estDotStyle }}"></span><span>{{ sel.estado }}</span></div>',
       '<div style="display:flex;flex-direction:column;gap:3px;min-width:120px"><span style="font-size:10px;line-height:1;color:#8A95A1;text-transform:uppercase;font-weight:600">Estado</span><div style="{{ sel.estadoValueStyle }}"><span style="{{ sel.estDotStyle }}"></span><span>{{ sel.estado }}</span></div></div>'
@@ -787,6 +822,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       '  componentDidMount() {',
       `  openProjectCharter(project) {
     const stakeholders=Array.isArray(project.stakeholders)?project.stakeholders:[];
+    const meaningfulRisks=(project.riesgos||[]).filter(x=>typeof x==='string'?String(x).trim():String((x&&x.riesgo)||'').trim());
     const sponsor=stakeholders.find(x=>String(x.rol||'').toLowerCase().includes('sponsor'));
     const missing=[];
     if(!(project.tituloEjecutivo||project.nombre))missing.push('Nombre del proyecto');
@@ -798,7 +834,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if(!project.objetivo)missing.push('Objetivos');
     if(!project.alcance)missing.push('Alcance');
     if(!stakeholders.length)missing.push('Stakeholders');
-    if(!(project.riesgos||[]).filter(Boolean).length)missing.push('Riesgos iniciales');
+    if(!meaningfulRisks.length)missing.push('Riesgos iniciales');
     if(!project.presupuestoNA&&!project.presupuestoMonto)missing.push('Presupuesto estimado');
     this.setState({charterConfirmOpen:true,charterProjectId:project.id,charterProjectName:project.tituloEjecutivo||project.nombre||'Proyecto',charterSummary:[
       'Sponsor: '+(sponsor&&sponsor.persona?sponsor.persona:'Por definir'),
@@ -806,7 +842,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       'Periodo: '+(project.inicio||'Por definir')+' — '+(project.fin||'Por definir'),
       'Cronograma: '+((project.tareas||[]).length)+' tareas',
       'Stakeholders: '+stakeholders.length,
-      'Riesgos: '+((project.riesgos||[]).filter(Boolean).length)
+      'Riesgos: '+meaningfulRisks.length
     ],charterMissing:missing,charterError:''});
   }
   closeProjectCharter(){if(!this.state.charterExporting)this.setState({charterConfirmOpen:false,charterError:''});}

@@ -103,7 +103,8 @@ function run(text, options = {}) {
   const color = options.color || '26352D';
   const size = options.size || 21;
   const bold = options.bold ? '<w:b/>' : '';
-  return `<w:r><w:rPr>${bold}<w:color w:val="${color}"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
+  const font = options.bold ? 'Poppins SemiBold' : 'Poppins';
+  return `<w:r><w:rPr><w:rFonts w:ascii="${font}" w:hAnsi="${font}" w:cs="${font}"/>${bold}<w:color w:val="${color}"/><w:sz w:val="${size}"/><w:szCs w:val="${size}"/></w:rPr><w:t xml:space="preserve">${esc(text)}</w:t></w:r>`;
 }
 
 function paragraph(text, options = {}) {
@@ -112,8 +113,8 @@ function paragraph(text, options = {}) {
   return `<w:p><w:pPr><w:spacing w:after="${after}"/>${align}</w:pPr>${run(text, options)}</w:p>`;
 }
 
-function heading(text) {
-  return `<w:p><w:pPr><w:spacing w:before="220" w:after="100"/><w:keepNext/></w:pPr>${run(text, { bold: true, color: '005F1E', size: 25 })}</w:p>`;
+function heading(text, color = '0070C0') {
+  return `<w:p><w:pPr><w:spacing w:before="220" w:after="100"/><w:keepNext/></w:pPr>${run(text, { bold: true, color, size: 25 })}</w:p>`;
 }
 
 function cell(text, options = {}) {
@@ -122,9 +123,9 @@ function cell(text, options = {}) {
   return `<w:tc><w:tcPr>${width}${shade}<w:vAlign w:val="center"/></w:tcPr>${paragraph(text || '—', { bold: options.bold, color: options.color || '26352D', size: options.size || 19, after: 20 })}</w:tc>`;
 }
 
-function table(rows, widths = []) {
+function table(rows, widths = [], hasHeader = true) {
   const grid = widths.length ? `<w:tblGrid>${widths.map((w) => `<w:gridCol w:w="${w}"/>`).join('')}</w:tblGrid>` : '';
-  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="D6DCE2"/><w:left w:val="single" w:sz="4" w:color="D6DCE2"/><w:bottom w:val="single" w:sz="4" w:color="D6DCE2"/><w:right w:val="single" w:sz="4" w:color="D6DCE2"/><w:insideH w:val="single" w:sz="4" w:color="D6DCE2"/><w:insideV w:val="single" w:sz="4" w:color="D6DCE2"/></w:tblBorders><w:tblCellMar><w:top w:w="90" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tblCellMar></w:tblPr>${grid}${rows.map((row, rowIndex) => `<w:tr>${row.map((value, i) => cell(value, { width: widths[i], bold: rowIndex === 0, shade: rowIndex === 0 ? 'E3F7EC' : '', color: rowIndex === 0 ? '005F1E' : '26352D' })).join('')}</w:tr>`).join('')}</w:tbl>`;
+  return `<w:tbl><w:tblPr><w:tblW w:w="0" w:type="auto"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="D6DCE2"/><w:left w:val="single" w:sz="4" w:color="D6DCE2"/><w:bottom w:val="single" w:sz="4" w:color="D6DCE2"/><w:right w:val="single" w:sz="4" w:color="D6DCE2"/><w:insideH w:val="single" w:sz="4" w:color="D6DCE2"/><w:insideV w:val="single" w:sz="4" w:color="D6DCE2"/></w:tblBorders><w:tblCellMar><w:top w:w="90" w:type="dxa"/><w:left w:w="110" w:type="dxa"/><w:bottom w:w="90" w:type="dxa"/><w:right w:w="110" w:type="dxa"/></w:tblCellMar></w:tblPr>${grid}${rows.map((row, rowIndex) => { const header=hasHeader&&rowIndex===0; return `<w:tr>${row.map((value, i) => cell(value, { width: widths[i], bold: header || (!hasHeader && i === 0), shade: header ? '00B050' : 'FFFFFF', color: header ? 'FFFFFF' : '26352D' })).join('')}</w:tr>`; }).join('')}</w:tbl>`;
 }
 
 function formatDate(value) {
@@ -134,6 +135,7 @@ function formatDate(value) {
 }
 
 function riskRow(value) {
+  if (value && typeof value === 'object') return [value.riesgo || value.text || '—', value.mitigacion || 'Por definir'];
   const text = String(value || '');
   const parts = text.split(/\s*(?:\||;\s*mitigaci[oó]n\s*:|\s+-\s+mitigaci[oó]n\s*:)\s*/i);
   return [parts[0] || '—', parts.slice(1).join(' ') || 'Por definir'];
@@ -159,20 +161,20 @@ function buildDocument(project, originalXml) {
       ? stakeholders.map((item) => [item.persona || '—', item.rol || '—', item.actividades || '—'])
       : [['Por definir', 'Por definir', 'Por definir']]
   );
-  const ganttRows = [['Actividad', 'Inicio', 'Fin', 'Responsable', 'Avance']];
-  ganttRows.push([project.nombre || 'Proyecto', formatDate(project.inicio), formatDate(project.fin), project.asignado || '—', `${Number(project.avance) || 0}%`]);
-  for (const task of (project.tareas || [])) ganttRows.push([task.nombre || 'Tarea', formatDate(task.inicio), formatDate(task.fin), task.asignado || project.asignado || '—', `${Number(task.avance) || 0}%`]);
-  const risks = Array.isArray(project.riesgos) ? project.riesgos.filter(Boolean) : [];
+  const ganttRows = [['Actividad', 'Inicio', 'Fin', 'Responsable']];
+  ganttRows.push([project.nombre || 'Proyecto', formatDate(project.inicio), formatDate(project.fin), project.asignado || '—']);
+  for (const task of (project.tareas || [])) ganttRows.push([task.nombre || 'Tarea', formatDate(task.inicio), formatDate(task.fin), task.asignado || project.asignado || '—']);
+  const risks = Array.isArray(project.riesgos) ? project.riesgos.filter((item) => typeof item === 'string' ? item.trim() : item && String(item.riesgo || item.text || '').trim()) : [];
   const riskRows = [['Riesgo potencial', 'Propuesta de mitigación de riesgo']].concat(risks.length ? risks.map(riskRow) : [['Por definir', 'Por definir']]);
   const sect = (originalXml.match(/<w:sectPr[\s\S]*?<\/w:sectPr>/) || ['<w:sectPr/>'])[0];
 
   const body = [
-    paragraph('PROJECT CHARTER', { bold: true, color: '005F1E', size: 38, align: 'center', after: 260 }),
-    heading('Visión general del proyecto'), table(overview, [3300, 5900]),
+    paragraph('PROJECT CHARTER', { bold: true, color: '0070C0', size: 38, align: 'center', after: 260 }),
+    heading('Visión general del proyecto', '44E44C'), table(overview, [3300, 5900], false),
     heading('Descripción del proyecto'), paragraph(project.descripcionEjecutiva || project.descripcion || 'Por definir'),
     heading('Objetivos'), paragraph(project.objetivo || 'Por definir'),
     heading('Alcance preliminar del proyecto'), paragraph(project.alcance || 'Por definir'),
-    heading('Cronograma General'), table(ganttRows, [3000, 1450, 1450, 2100, 1000]),
+    heading('Cronograma General'), table(ganttRows, [3600, 1600, 1600, 2200]),
     heading('Stakeholders'), table(teamRows, [2800, 2200, 4000]),
     heading('Riesgos Iniciales'), table(riskRows, [4500, 4500]),
     sect,
