@@ -69,7 +69,7 @@ function buildAcceptanceDocument(project, acceptance, originalXml) {
   );
   const projectObjectives = objectives.map((item) => item.texto).join('; ');
   const mainObjective = String(project.objetivo || projectObjectives || 'Por definir').trim().replace(/[.\s]+$/, '');
-  const defaultSummary = `El proyecto “${project.tituloEjecutivo || project.nombre || 'Por definir'}” se desarrolló entre ${formatDate(project.inicio)} y ${formatDate(project.fin)}. ${project.descripcionEjecutiva || project.descripcion || ''} Su objetivo principal fue ${mainObjective}. El resultado general registrado es ${project.estado || 'Por definir'}, con ${Number(project.avance) || 0}% de avance.`.replace(/\s+/g, ' ').trim();
+  const defaultSummary = `El proyecto “${project.tituloEjecutivo || project.nombre || 'Por definir'}” se desarrolló entre ${formatDate(project.inicio)} y ${formatDate(project.fin)}. ${project.descripcionEjecutiva || project.descripcion || ''} Su objetivo fue ${mainObjective}. El resultado general registrado es ${project.estado || 'Por definir'}, con ${Number(project.avance) || 0}% de avance.`.replace(/\s+/g, ' ').trim();
   const summary = acceptance.resumenEjecutivo || defaultSummary;
   const declaration = acceptance.declaracion || 'Declaro que el proyecto ha sido completado de acuerdo con los requerimientos establecidos y que los entregables cumplen con los criterios de aceptación definidos.';
   const formalName = acceptance.aceptacionNombre || 'Por definir';

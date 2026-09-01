@@ -169,11 +169,10 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
   const previousProjectsById = new Map(prevProjectsCsv.rows.map((r) => [Number(r.id), r]));
   const previousTasksByKey = new Map(prevTasksCsv.rows.map((r) => [r.projectId + '::' + r.id, r]));
 
-  // Solo coordinadores y administradores pueden eliminar. La misma regla se
+  // Solo coordinadores, owners y administradores pueden eliminar. La misma regla se
   // valida aqui para no depender exclusivamente del boton de la interfaz.
   const normalizedRole = String(actorRole || '').trim().toLowerCase();
-  const canDelete = normalizedRole === 'admin' || normalizedRole === 'coordinador';
-  const canManageDates = canDelete;
+  const canDelete = normalizedRole === 'admin' || normalizedRole === 'coordinador' || normalizedRole === 'owner';
   const incomingProjectIds = new Set(projects.map((p) => Number(p.id)));
   for (const previous of prevProjectsCsv.rows) {
     if (!canDelete && !incomingProjectIds.has(Number(previous.id))) {
@@ -197,24 +196,12 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
 
   for (const project of projects) {
     const previousProject = previousProjectsById.get(Number(project.id));
-    if (previousProject && !canManageDates) {
-      const previousExtra = safeJsonParse(previousProject.extra, {});
-      const isCreationDraft = previousExtra.createdByEmail &&
-        String(previousExtra.createdByEmail).toLowerCase() === String(actorEmail || '').toLowerCase() &&
-        String(previousProject.nombre || '').trim() === 'Nuevo proyecto';
-      if (!isCreationDraft) {
-        project.inicio = previousProject.inicio || '';
-        project.fin = previousProject.fin || '';
-        project.fechaSolicitud = previousProject.fechaSolicitud || '';
-        project.finReal = previousProject.finReal || '';
-      }
-    }
     const projectRow = projectToRow(project, previousProjectsById, now);
     projectRows.push(projectRow);
     if (!previousProject) {
       auditEntries.push({ action: 'CREATE', entityType: 'project', entityId: project.id, projectId: project.id, newValue: project.nombre || '' });
     } else {
-      for (const field of ['fechaSolicitud', 'inicio', 'fin', 'finReal']) {
+      for (const field of ['fechaSolicitud', 'inicio', 'fin', 'finReal', 'estado']) {
         if (String(previousProject[field] || '') !== String(projectRow[field] || '')) {
           auditEntries.push({ action: 'UPDATE', entityType: 'project', entityId: project.id, projectId: project.id, field, oldValue: previousProject[field], newValue: projectRow[field] });
         }
@@ -224,15 +211,6 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
     for (const task of tareas) {
       const taskKey = String(project.id) + '::' + String(task.id);
       const previousTask = previousTasksByKey.get(taskKey);
-      if (previousTask && !canManageDates) {
-        const isCreationDraft = previousTask.createdByEmail &&
-          String(previousTask.createdByEmail).toLowerCase() === String(actorEmail || '').toLowerCase() &&
-          String(previousTask.nombre || '').trim() === 'Nueva tarea';
-        if (!isCreationDraft) {
-          task.inicio = previousTask.inicio || '';
-          task.fin = previousTask.fin || '';
-        }
-      }
       const taskRow = taskToRow(project.id, task, previousTasksByKey, now);
       taskRows.push(taskRow);
       if (!previousTask) {
@@ -242,6 +220,11 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
           if (String(previousTask[field] || '') !== String(taskRow[field] || '')) {
             auditEntries.push({ action: 'UPDATE', entityType: 'project_task', entityId: task.id, projectId: project.id, field, oldValue: previousTask[field], newValue: taskRow[field] });
           }
+        }
+        const previousState = Number(previousTask.avance) >= 100 ? 'Completado' : 'En proceso';
+        const currentState = Number(taskRow.avance) >= 100 ? 'Completado' : 'En proceso';
+        if (previousState !== currentState) {
+          auditEntries.push({ action: 'UPDATE', entityType: 'project_task', entityId: task.id, projectId: project.id, field: 'estado', oldValue: previousState, newValue: currentState });
         }
       }
     }

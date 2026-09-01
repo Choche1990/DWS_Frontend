@@ -44,8 +44,7 @@ function saveIndependentTasks({ tasks, actor = {} }) {
   const previous = readCSVFile(TASKS_CSV).rows;
   const previousById = new Map(previous.map((row) => [String(row.id), row]));
   const role = String(actor.role || '').trim().toLowerCase();
-  const canDelete = role === 'admin' || role === 'coordinador';
-  const canManageDates = canDelete;
+  const canDelete = role === 'admin' || role === 'coordinador' || role === 'owner';
   const incomingIds = new Set(tasks.map((task) => String(task.id)));
   if (!canDelete && previous.some((row) => !incomingIds.has(String(row.id)))) {
     throw new Error('independent_task_deletion_not_allowed');
@@ -53,17 +52,13 @@ function saveIndependentTasks({ tasks, actor = {} }) {
   const now = new Date().toISOString();
   const rows = tasks.map((task) => {
     const prev = previousById.get(String(task.id));
-    const isCreationDraft = prev && prev.createdByEmail &&
-      String(prev.createdByEmail).toLowerCase() === String(actor.email || '').toLowerCase() &&
-      !String(prev.titulo || '').trim();
-    const mayEditDates = !prev || canManageDates || isCreationDraft;
     return {
       id: task.id,
       titulo: task.titulo || '',
       complejidad: task.complejidad || 'Media',
       estado: task.estado || 'En proceso',
-      inicio: mayEditDates ? (task.inicio || '') : (prev.inicio || ''),
-      fin: mayEditDates ? (task.fin || '') : (prev.fin || ''),
+      inicio: task.inicio || '',
+      fin: task.fin || '',
       asignado: task.asignado || '',
       descripcion: task.descripcion || '',
       solicitanteNombre: task.solicitanteNombre || '',
@@ -87,6 +82,9 @@ function saveIndependentTasks({ tasks, actor = {} }) {
         auditEntries.push({ action: 'UPDATE', entityType: 'independent_task', entityId: row.id, field, oldValue: prev[field], newValue: row[field] });
       }
     }
+    if (String(prev.estado || 'En proceso') !== String(row.estado || 'En proceso')) {
+      auditEntries.push({ action: 'UPDATE', entityType: 'independent_task', entityId: row.id, field: 'estado', oldValue: prev.estado || 'En proceso', newValue: row.estado || 'En proceso' });
+    }
   }
   for (const prev of previous) {
     if (!incomingIds.has(String(prev.id))) auditEntries.push({ action: 'DELETE', entityType: 'independent_task', entityId: prev.id, oldValue: prev.titulo || 'Tarea independiente' });
@@ -108,7 +106,7 @@ function upsertIndependentTask({ task, actor = {} }) {
 function deleteIndependentTask({ id, actor = {} }) {
   ensureIndependentTasksFile();
   const role = String(actor.role || '').trim().toLowerCase();
-  if (role !== 'admin' && role !== 'coordinador') throw new Error('independent_task_deletion_not_allowed');
+  if (role !== 'admin' && role !== 'coordinador' && role !== 'owner') throw new Error('independent_task_deletion_not_allowed');
   const current = loadIndependentTasks().tasks;
   return saveIndependentTasks({ tasks: current.filter((task) => String(task.id) !== String(id)), actor });
 }

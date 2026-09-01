@@ -44,7 +44,7 @@ function loadProjectHistory(projectId) {
     .filter((row) => String(row.projectId) === String(projectId))
     .filter((row) => {
       if (row.action === 'CREATE' || row.action === 'DELETE') return row.entityType === 'project' || row.entityType === 'project_task';
-      return row.action === 'UPDATE' && (row.field === 'fechaSolicitud' || row.field === 'inicio' || row.field === 'fin' || row.field === 'finReal');
+      return row.action === 'UPDATE' && (row.field === 'fechaSolicitud' || row.field === 'inicio' || row.field === 'fin' || row.field === 'finReal' || row.field === 'estado');
     })
     .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
 }
@@ -53,7 +53,7 @@ function loadIndependentTaskHistory() {
   ensureAuditFile();
   return readCSVFile(AUDIT_CSV).rows
     .filter((row) => row.entityType === 'independent_task')
-    .filter((row) => row.action === 'CREATE' || row.action === 'DELETE' || (row.action === 'UPDATE' && (row.field === 'inicio' || row.field === 'fin')))
+    .filter((row) => row.action === 'CREATE' || row.action === 'DELETE' || (row.action === 'UPDATE' && (row.field === 'inicio' || row.field === 'fin' || row.field === 'estado')))
     .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
 }
 
