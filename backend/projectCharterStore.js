@@ -172,6 +172,10 @@ function buildDocument(project, originalXml) {
     .map((item) => String(item || '').trim()).filter(Boolean);
   const objectiveParagraphs = (objectives.length ? objectives : ['Por definir'])
     .map((item) => paragraph(`• ${item}`, { after: 55 })).join('');
+  const successCriteria = (Array.isArray(project.criteriosExito) ? project.criteriosExito : [])
+    .map((item) => String(item || '').trim()).filter(Boolean);
+  const successCriteriaParagraphs = (successCriteria.length ? successCriteria : ['Por definir'])
+    .map((item) => paragraph(`• ${item}`, { after: 55 })).join('');
   const sect = (originalXml.match(/<w:sectPr[\s\S]*?<\/w:sectPr>/) || ['<w:sectPr/>'])[0];
 
   const body = [
@@ -179,6 +183,7 @@ function buildDocument(project, originalXml) {
     heading('Visión general del proyecto', '44E44C'), table(overview, [3300, 5900], false),
     heading('Descripción del proyecto'), paragraph(project.descripcionEjecutiva || project.descripcion || 'Por definir'),
     heading('Objetivos'), objectiveParagraphs,
+    heading('Criterios de Éxito del Proyecto'), successCriteriaParagraphs,
     heading('Alcance preliminar del proyecto'), paragraph(project.alcance || 'Por definir'),
     heading('Cronograma General'), table(ganttRows, [3600, 1600, 1600, 2200]),
     heading('Stakeholders'), table(teamRows, [2800, 2200, 4000]),

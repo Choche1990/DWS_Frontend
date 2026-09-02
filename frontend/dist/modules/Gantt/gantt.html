@@ -228,6 +228,13 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (oldContextAt >= 0 && oldContextEndAt > oldContextAt) template = template.slice(0, oldContextAt) + template.slice(oldContextEndAt);
 
     // Jerarquía de la ficha: contexto → responsables → roadmap → entregables → proceso → próximos pasos/riesgos → indicadores.
+    const successCriteriaBlock = `      <div style="background:#fff;border:1px solid #E6EAEE;border-radius:16px;padding:18px 20px;box-shadow:0 4px 20px rgba(0,0,0,.04)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px"><div><div style="font-size:14px;font-weight:600">Criterios de Éxito del Proyecto</div><div style="font-size:11px;color:#8A95A1;margin-top:2px">Condiciones verificables que determinarán el éxito del proyecto</div></div><button sc-camel-on-click="{{ sel.addSuccessCriterion }}" style="background:none;border:1px dashed #B9E5C9;color:#00792F;border-radius:999px;padding:5px 12px;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap">+ Agregar criterio</button></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><sc-for list="{{ sel.successCriteriaRows }}" as="criterion" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:8px"><span style="color:#05BE50;font-weight:700;flex:none">•</span><input class="ib-cell" style="flex:1;font-size:13px" value="{{ criterion.text }}" sc-camel-on-change="{{ criterion.onText }}" placeholder="Ej. Alcanzar el indicador objetivo dentro del plazo acordado"><button sc-camel-on-click="{{ criterion.onRemove }}" class="ib-del-btn" title="Quitar criterio" style="width:18px;height:18px;border-radius:6px;border:none;background:none;color:#C7CDD3;cursor:pointer;flex:none">×</button></div></sc-for></div>
+        <sc-if value="{{ sel.successCriteriaEmpty }}" hint-placeholder-val="{{ false }}"><div style="color:#A0AAB4;font-size:12px;padding:6px 0">Sin criterios de éxito definidos.</div></sc-if>
+      </div>
+
+`;
     const processStart = template.indexOf(oldContextEnd);
     const processNextAnchor = '      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">\n        <div style="background:#fff;border:1px solid #E6EAEE;border-radius:16px;padding:18px 20px;box-shadow:0 4px 20px rgba(0,0,0,.04)">\n          <div style="font-size:14px;font-weight:600;margin-bottom:8px">Próximos pasos</div>';
     const processEnd = template.indexOf(processNextAnchor, processStart);
@@ -236,7 +243,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       const processBlock = template.slice(processStart, processEnd);
       const followUpBlock = template.slice(processEnd, detailContentEnd).replace('grid-template-columns:1fr 1fr', 'grid-template-columns:minmax(250px,.72fr) minmax(0,1.55fr)');
       template = template.slice(0, processStart) + template.slice(detailContentEnd);
-      template = template.replace(detailMetricsAnchor, processBlock + followUpBlock + '\n      <div style="font-size:15px;font-weight:600;color:#1B2733;margin:2px 2px -6px">Indicadores de impacto</div>\n' + detailMetricsAnchor);
+      template = template.replace(detailMetricsAnchor, processBlock + successCriteriaBlock + followUpBlock + '\n      <div style="font-size:15px;font-weight:600;color:#1B2733;margin:2px 2px -6px">Indicadores de impacto</div>\n' + detailMetricsAnchor);
     }
     template = template.replace(
       '<input class="ib-cell" style="font-size:24px;font-weight:700;width:100%;padding:2px 0" value="{{ sel.tituloEjecutivo }}" sc-camel-on-change="{{ sel.onTituloEjecutivo }}" placeholder="Título del proyecto">',
@@ -284,6 +291,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <label style="font-size:9.5px;color:#00792F;font-weight:800;text-transform:uppercase;letter-spacing:.03em">Propuesta de mitigación<textarea class="ib-cell" rows="3" style="width:100%;margin-top:5px;font-size:12px;line-height:1.4;resize:vertical;background:#F8FDF9;border:1px solid #CDEEDB;border-radius:9px" value="{{ rg.mitigacion }}" sc-camel-on-change="{{ rg.onMitigacion }}" placeholder="Indica cómo reducir o responder al riesgo"></textarea></label>
                 <button sc-camel-on-click="{{ rg.onRemove }}" class="ib-del-btn" title="Eliminar riesgo" style="width:22px;height:22px;border-radius:6px;border:none;background:none;color:#B23B3B;cursor:pointer;flex:none">×</button>
               </div>`
+    );
+    template = template.replace(
+      '  const pasos = rp.proximosPasos || [];',
+      "  const pasos = rp.proximosPasos || [];\n  const criteriosExitoArr = Array.isArray(rp.criteriosExito) ? rp.criteriosExito : [];"
+    );
+    template = template.replace(
+      "    addPaso: () => this.update(rp.id, { proximosPasos: [...pasos, ''] }),",
+      `    addPaso: () => this.update(rp.id, { proximosPasos: [...pasos, ''] }),
+    successCriteriaRows: criteriosExitoArr.map((txt, i) => ({
+      text: txt,
+      onText: ev => { const arr = criteriosExitoArr.slice(); arr[i] = ev.target.value; this.update(rp.id, { criteriosExito: arr }); },
+      onRemove: () => this.update(rp.id, { criteriosExito: criteriosExitoArr.filter((_, ix) => ix !== i) }),
+    })),
+    successCriteriaEmpty: criteriosExitoArr.length === 0,
+    addSuccessCriterion: () => this.update(rp.id, { criteriosExito: [...criteriosExitoArr, ''] }),`
     );
     template = template.replace(
       '<div style="{{ sel.estPillStyle }}"><span style="{{ sel.estDotStyle }}"></span><span>{{ sel.estado }}</span></div>',
@@ -852,6 +874,12 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace(/style="font-size:12\.5px;font-variant-numeric:tabular-nums" type="date" value="\{\{ r\.(inicio|fin|fechaSolicitud|finReal) \}\}"/g, 'style="font-size:12.5px;font-variant-numeric:tabular-nums;{{ r.dateInputStyle }}" type="date" value="{{ r.$1 }}"');
     template = template.replace(/style="flex:1;font-size:11px" type="date" value="\{\{ t\.(inicio|fin) \}\}"/g, 'style="flex:1;font-size:11px;{{ t.dateInputStyle }}" type="date" value="{{ t.$1 }}"');
     template = template.replace(/style="width:100%;margin-top:5px" value="\{\{ taskEditor\.(inicio|fin) \}\}"/g, 'style="width:100%;margin-top:5px;{{ taskEditor.dateInputStyle }}" value="{{ taskEditor.$1 }}"');
+    // Guardar al terminar de editar evita que el render del Gantt cierre el calendario
+    // mientras el usuario navega por meses o escribe manualmente una fecha.
+    template = template.replace(
+      /(type="date"[^>]*value="\{\{ (?:r|t|taskEditor)\.(?:inicio|fin|fechaSolicitud|finReal) \}\}"[^>]*?)sc-camel-on-change/g,
+      '$1sc-camel-on-blur'
+    );
     template = template.replace(
       "              capLabel: capPctT + '%',",
       "              capLabel: (task.capacidadHoras == null ? 1 : Math.max(0, Number(task.capacidadHoras) || 0)) + ' h',"
@@ -948,6 +976,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   openProjectCharter(project) {
     const stakeholders=Array.isArray(project.stakeholders)?project.stakeholders:[];
     const meaningfulRisks=(project.riesgos||[]).filter(x=>typeof x==='string'?String(x).trim():String((x&&x.riesgo)||'').trim());
+    const meaningfulCriteria=(Array.isArray(project.criteriosExito)?project.criteriosExito:[]).filter(x=>String(x||'').trim());
     const sponsor=stakeholders.find(x=>String(x.rol||'').toLowerCase().includes('sponsor'));
     const missing=[];
     if(!(project.tituloEjecutivo||project.nombre))missing.push('Nombre del proyecto');
@@ -960,6 +989,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if(!project.alcance)missing.push('Alcance');
     if(!stakeholders.length)missing.push('Stakeholders');
     if(!meaningfulRisks.length)missing.push('Riesgos iniciales');
+    if(!meaningfulCriteria.length)missing.push('Criterios de éxito');
     if(!project.presupuestoNA&&!project.presupuestoMonto)missing.push('Presupuesto estimado');
     this.setState({charterConfirmOpen:true,charterProjectId:project.id,charterProjectName:project.tituloEjecutivo||project.nombre||'Proyecto',charterSummary:[
       'Sponsor: '+(sponsor&&sponsor.persona?sponsor.persona:'Por definir'),
@@ -967,7 +997,8 @@ document.addEventListener('DOMContentLoaded', async function() {
       'Periodo: '+(project.inicio||'Por definir')+' — '+(project.fin||'Por definir'),
       'Cronograma: '+((project.tareas||[]).length)+' tareas',
       'Stakeholders: '+stakeholders.length,
-      'Riesgos: '+meaningfulRisks.length
+      'Riesgos: '+meaningfulRisks.length,
+      'Criterios de éxito: '+meaningfulCriteria.length
     ],charterMissing:missing,charterError:''});
   }
   closeProjectCharter(){if(!this.state.charterExporting)this.setState({charterConfirmOpen:false,charterError:''});}
@@ -1053,7 +1084,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     // guardado para que el backend pueda aplicar los permisos de eliminacion.
     template = template.replace(
       "const np = { id, nombre:'Nuevo proyecto', descripcion:'', periodo:'Q1', estado:'En backlog', asignado:'Anyela',",
-      "const creator = (this.state.currentUser && this.state.currentUser.nombre) || 'Anyela';\n    const np = { id, nombre:'Nuevo proyecto', descripcion:'', periodo:'Q1', estado:'En backlog', asignado:creator,"
+      "const creator = (this.state.currentUser && this.state.currentUser.nombre) || 'Anyela';\n    const now = new Date(); const todayIso = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');\n    const np = { id, nombre:'Nuevo proyecto', descripcion:'', periodo:'Q1', estado:'En backlog', asignado:creator,"
+    );
+    template = template.replace(
+      "fechaSolicitud: this.props.fechaHoy || '2026-07-31', inicio:'2026-01-05', fin:'2026-02-05',",
+      "fechaSolicitud:todayIso, inicio:todayIso, fin:todayIso,"
     );
     template = template.replace(
       "finReal:'', tareas:[] };",

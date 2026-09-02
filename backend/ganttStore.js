@@ -28,8 +28,8 @@ const PROJECT_NUMBER_FIELDS = [
   'ahorroTiempoDespues', 'ahorroFTE',
 ];
 const PROJECT_BOOL_FIELDS = ['naDinero', 'naTiempo', 'naFTE'];
-const PROJECT_JSON_FIELDS = ['equiposInvolucrados', 'procesoEtapas', 'proximosPasos', 'riesgos'];
-const PROJECT_JSON_DEFAULTS = { equiposInvolucrados: '[]', procesoEtapas: '[]', proximosPasos: '[]', riesgos: '[]' };
+const PROJECT_JSON_FIELDS = ['equiposInvolucrados', 'procesoEtapas', 'proximosPasos', 'criteriosExito', 'riesgos'];
+const PROJECT_JSON_DEFAULTS = { equiposInvolucrados: '[]', procesoEtapas: '[]', proximosPasos: '[]', criteriosExito: '[]', riesgos: '[]' };
 
 // Orden explícito y estable de columnas del CSV de proyectos:
 const PROJECTS_HEADERS = [
@@ -39,7 +39,7 @@ const PROJECTS_HEADERS = [
   'naDinero', 'monedaDinero', 'dineroAntes', 'dineroDespues',
   'naTiempo', 'ahorroTiempoAntes', 'ahorroTiempoDespues',
   'naFTE', 'ahorroFTE',
-  'equiposInvolucrados', 'procesoEtapas', 'proximosPasos', 'riesgos',
+  'equiposInvolucrados', 'procesoEtapas', 'proximosPasos', 'criteriosExito', 'riesgos',
   'extra', 'createdAt', 'updatedAt',
 ];
 const PROJECT_EXPLICIT_FIELDS = new Set(PROJECTS_HEADERS.filter((f) => f !== 'extra' && f !== 'createdAt' && f !== 'updatedAt'));
