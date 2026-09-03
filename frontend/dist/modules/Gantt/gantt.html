@@ -720,13 +720,12 @@ document.addEventListener('DOMContentLoaded', async function() {
           inicio: selectedKanbanTask.inicio || '', fin: selectedKanbanTask.fin || '',
           solicitanteNombre: selectedKanbanTask.solicitanteNombre || '', solicitanteArea: selectedKanbanTask.solicitanteArea || '',
           descripcion: selectedKanbanTask.descripcion || '', capacidadHoras: selectedKanbanTask.capacidadHoras ?? 1,
-          dateInputStyle: lockedDateStyle(selectedKanbanTask),
           onTitulo: ev => this.updateKanbanTask(selectedKanbanTask.id,{titulo:ev.target.value}),
           onAsignado: ev => this.updateKanbanTask(selectedKanbanTask.id,{asignado:ev.target.value}),
           onComplejidad: ev => this.updateKanbanTask(selectedKanbanTask.id,{complejidad:ev.target.value}),
           onEstado: ev => this.updateKanbanTask(selectedKanbanTask.id,{estado:ev.target.value}),
-          onInicio: canEditDates(selectedKanbanTask) ? (ev => this.updateKanbanTask(selectedKanbanTask.id,{inicio:ev.target.value})) : (()=>{}),
-          onFin: canEditDates(selectedKanbanTask) ? (ev => this.updateKanbanTask(selectedKanbanTask.id,{fin:ev.target.value})) : (()=>{}),
+          onInicio: ev => this.updateKanbanTask(selectedKanbanTask.id,{inicio:ev.target.value}),
+          onFin: ev => this.updateKanbanTask(selectedKanbanTask.id,{fin:ev.target.value}),
           onSolicitanteNombre: ev => this.updateKanbanTask(selectedKanbanTask.id,{solicitanteNombre:ev.target.value}),
           onSolicitanteArea: ev => this.updateKanbanTask(selectedKanbanTask.id,{solicitanteArea:ev.target.value}),
           onDescripcion: ev => this.updateKanbanTask(selectedKanbanTask.id,{descripcion:ev.target.value}),
@@ -867,19 +866,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         const tareasColumns = boardColumnNames.map(name => {`
     );
     template = template.replace('const myTasks = st.kanbanTasks.filter(x => x.asignado === name);', 'const myTasks = boardTasks.filter(x => x.asignado === name);');
-    template = template.replace(
-      '              estado: task.estado,',
-      '              estado: task.estado, dateInputStyle:lockedDateStyle(task),'
-    );
-    template = template.replace(/style="font-size:12\.5px;font-variant-numeric:tabular-nums" type="date" value="\{\{ r\.(inicio|fin|fechaSolicitud|finReal) \}\}"/g, 'style="font-size:12.5px;font-variant-numeric:tabular-nums;{{ r.dateInputStyle }}" type="date" value="{{ r.$1 }}"');
-    template = template.replace(/style="flex:1;font-size:11px" type="date" value="\{\{ t\.(inicio|fin) \}\}"/g, 'style="flex:1;font-size:11px;{{ t.dateInputStyle }}" type="date" value="{{ t.$1 }}"');
-    template = template.replace(/style="width:100%;margin-top:5px" value="\{\{ taskEditor\.(inicio|fin) \}\}"/g, 'style="width:100%;margin-top:5px;{{ taskEditor.dateInputStyle }}" value="{{ taskEditor.$1 }}"');
-    // Guardar al terminar de editar evita que el render del Gantt cierre el calendario
-    // mientras el usuario navega por meses o escribe manualmente una fecha.
-    template = template.replace(
-      /(type="date"[^>]*value="\{\{ (?:r|t|taskEditor)\.(?:inicio|fin|fechaSolicitud|finReal) \}\}"[^>]*?)sc-camel-on-change/g,
-      '$1sc-camel-on-blur'
-    );
     template = template.replace(
       "              capLabel: capPctT + '%',",
       "              capLabel: (task.capacidadHoras == null ? 1 : Math.max(0, Number(task.capacidadHoras) || 0)) + ' h',"
@@ -1101,29 +1087,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace(
       "const nt = { id, asignado:name, titulo:'', complejidad:'Media', estado:'En proceso', inicio:'', fin:'', descripcion:'', solicitanteNombre:'', solicitanteArea:'', capacidadHoras:1 };",
       "const nt = { id, asignado:name, titulo:'', complejidad:'Media', estado:'En proceso', inicio:'', fin:'', descripcion:'', solicitanteNombre:'', solicitanteArea:'', capacidadHoras:1, createdByEmail:(this.state.currentUser&&this.state.currentUser.email)||'', dateSetupUntil:new Date(Date.now()+30*60*1000).toISOString() };"
-    );
-    template = template.replace(
-      "    const um = isNaN(UM) ? 2 : UM;",
-      `    const um = isNaN(UM) ? 2 : UM;
-    const activeUser = st.currentUser || {};
-    const canEditDates = () => true;
-    const lockedDateStyle = () => '';`
-    );
-    template = template.replace(
-      '        onInicio:ev=>this.update(p.id,{inicio:ev.target.value}),',
-      "        dateInputStyle:lockedDateStyle(p),\n        onInicio:canEditDates(p)?(ev=>this.update(p.id,{inicio:ev.target.value})):(()=>{}),"
-    );
-    template = template.replace(
-      '        onFin:ev=>this.update(p.id,{fin:ev.target.value}),',
-      '        onFin:canEditDates(p)?(ev=>this.update(p.id,{fin:ev.target.value})):(()=>{}),'
-    );
-    template = template.replace(
-      '            onInicio:e=>this.updateTask(proj.id,t.id,{inicio:e.target.value}),',
-      "            dateInputStyle:lockedDateStyle(t),\n            onInicio:canEditDates(t)?(e=>this.updateTask(proj.id,t.id,{inicio:e.target.value})):(()=>{}),"
-    );
-    template = template.replace(
-      '            onFin:e=>this.updateTask(proj.id,t.id,{fin:e.target.value}),',
-      '            onFin:canEditDates(t)?(e=>this.updateTask(proj.id,t.id,{fin:e.target.value})):(()=>{}),'
     );
     template = template.replace(
       "const members = Object.keys(state.personGroups).filter(n => state.personGroups[n] === user.grupo);",
