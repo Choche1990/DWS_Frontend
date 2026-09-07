@@ -731,7 +731,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           onDescripcion: ev => this.updateKanbanTask(selectedKanbanTask.id,{descripcion:ev.target.value}),
           onCapacidadHoras: ev => this.updateKanbanTask(selectedKanbanTask.id,{capacidadHoras:Math.max(0,Number(ev.target.value)||0)}),
           onDelete: () => { this.delKanbanTask(selectedKanbanTask.id,selectedKanbanTask.titulo||'Sin título'); this.setState({selectedKanbanTaskId:null}); },
-          openHistory: () => this.openIndependentTaskHistory()
+          openHistory: () => this.openIndependentTaskHistory(selectedKanbanTask.id, selectedKanbanTask.titulo)
         } : null;
 
         const teamModal = {`
@@ -1004,9 +1004,9 @@ document.addEventListener('DOMContentLoaded', async function() {
       this.setState({historyRows:data&&Array.isArray(data.history)?data.history:[],historyLoading:false,historyError:false});
     }).catch(()=>this.setState({historyLoading:false,historyError:true}));
   }
-  openIndependentTaskHistory() {
-    this.setState({historyOpen:true,historyProjectId:null,historyTitle:'Historial de tareas independientes',historyRows:[],historyLoading:true,historyError:false});
-    fetch('/api/project-history?scope=independent').then(r=>{if(!r.ok)throw new Error('history_failed');return r.json()}).then(data=>{
+  openIndependentTaskHistory(taskId, taskTitle) {
+    this.setState({historyOpen:true,historyProjectId:null,historyTitle:'Historial: '+(taskTitle||'Tarea independiente'),historyRows:[],historyLoading:true,historyError:false});
+    fetch('/api/project-history?scope=independent&taskId='+encodeURIComponent(taskId)).then(r=>{if(!r.ok)throw new Error('history_failed');return r.json()}).then(data=>{
       this.setState({historyRows:data&&Array.isArray(data.history)?data.history:[],historyLoading:false,historyError:false});
     }).catch(()=>this.setState({historyLoading:false,historyError:true}));
   }

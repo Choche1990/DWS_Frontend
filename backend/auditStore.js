@@ -49,10 +49,12 @@ function loadProjectHistory(projectId) {
     .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
 }
 
-function loadIndependentTaskHistory() {
+function loadIndependentTaskHistory(taskId) {
+  if (taskId == null || String(taskId).trim() === '') throw new Error('task_id_required');
   ensureAuditFile();
   return readCSVFile(AUDIT_CSV).rows
     .filter((row) => row.entityType === 'independent_task')
+    .filter((row) => String(row.entityId) === String(taskId))
     .filter((row) => row.action === 'CREATE' || row.action === 'DELETE' || (row.action === 'UPDATE' && (row.field === 'inicio' || row.field === 'fin' || row.field === 'estado')))
     .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
 }

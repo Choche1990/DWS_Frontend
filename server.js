@@ -203,8 +203,14 @@ const server = http.createServer((req, res) => {
     try {
       const requestUrl = new URL(req.url, 'http://localhost');
       if (requestUrl.searchParams.get('scope') === 'independent') {
+        const taskId = requestUrl.searchParams.get('taskId');
+        if (!taskId || !taskId.trim()) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ error: 'task_id_required' }));
+          return;
+        }
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ history: loadIndependentTaskHistory() }));
+        res.end(JSON.stringify({ history: loadIndependentTaskHistory(taskId) }));
         return;
       }
       const projectId = requestUrl.searchParams.get('projectId');
