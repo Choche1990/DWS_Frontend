@@ -1,11 +1,12 @@
 const http = require('http');
+const auth = require('./backend/sessionStore').createAuth();
 
 const fs = require('fs');
 
 const path = require('path');
 
 const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore');
-const { ensureUsersFile, findUser } = require('./backend/usersStore');
+const { ensureUsersFile } = require('./backend/usersStore');
 const { ensureIndependentTasksFile, loadIndependentTasks, saveIndependentTasks, upsertIndependentTask, deleteIndependentTask } = require('./backend/independentTasksStore');
 const { ensureAuditFile, loadProjectHistory, loadIndependentTaskHistory } = require('./backend/auditStore');
 const { buildProjectCharter, safeFileName } = require('./backend/projectCharterStore');
@@ -22,7 +23,7 @@ ensureAuditFile();
 
 const PORT = 8080;
 
- 
+
 
 // Ajusta esta ruta a la carpeta donde colocaste la compilación de tu Frontend.
 
@@ -32,7 +33,7 @@ const PORT = 8080;
 
 const PUBLIC_DIR = path.join(__dirname, 'frontend', 'dist');
 
- 
+
 
 // Mapa de Tipos MIME para que el navegador reconozca cada tipo de archivo
 
@@ -66,13 +67,14 @@ const mimeTypes = {
 
 };
 
- 
+
 
 const server = http.createServer((req, res) => {
 
   // --- API del Gantt (datos compartidos en CSV) — debe ir antes de servir estáticos ---
 
   const apiPath = req.url.split('?')[0];
+  if (auth.handle(req, res)) return;
 
   if (apiPath === '/api/gantt' && req.method === 'GET') {
 
@@ -118,7 +120,7 @@ const server = http.createServer((req, res) => {
 
         }
 
-        saveGantt(body);
+        saveGantt({...body, actorEmail:req.authActor.email, actorName:req.authActor.name, actorRole:req.authActor.role});
 
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
 
@@ -168,7 +170,7 @@ const server = http.createServer((req, res) => {
           res.end(JSON.stringify({ error: 'invalid_body' }));
           return;
         }
-        const saved = saveIndependentTasks(body);
+        const saved = saveIndependentTasks({...body, actor:req.authActor});
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ ok: true, ...saved }));
       } catch (error) {
@@ -186,8 +188,8 @@ const server = http.createServer((req, res) => {
       try {
         const body = JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}');
         const saved = req.method === 'DELETE'
-          ? deleteIndependentTask({ id: body.id, actor: body.actor || {} })
-          : upsertIndependentTask({ task: body.task, actor: body.actor || {} });
+          ? deleteIndependentTask({ id: body.id, actor: req.authActor })
+          : upsertIndependentTask({ task: body.task, actor: req.authActor });
         res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
         res.end(JSON.stringify({ ok: true, ...saved }));
       } catch (error) {
@@ -294,56 +296,6 @@ const server = http.createServer((req, res) => {
 
   // --- API de login (control de accesos, valida contra backend/data/users.csv) ---
 
-  if (apiPath === '/api/login' && req.method === 'POST') {
-
-    const loginChunks = [];
-
-    req.on('data', (chunk) => loginChunks.push(chunk));
-
-    req.on('end', () => {
-
-      try {
-
-        const body = JSON.parse(Buffer.concat(loginChunks).toString('utf-8') || '{}');
-
-        const user = findUser(body.email, body.password);
-
-        if (user) {
-
-          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-
-          res.end(JSON.stringify({ ok: true, user }));
-
-        } else {
-
-          res.writeHead(401, { 'Content-Type': 'application/json; charset=utf-8' });
-
-          res.end(JSON.stringify({ ok: false, error: 'invalid_credentials' }));
-
-        }
-
-      } catch (error) {
-
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-
-        res.end(JSON.stringify({ error: 'login_failed', message: String((error && error.message) || error) }));
-
-      }
-
-    });
-
-    req.on('error', () => {
-
-      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
-
-      res.end(JSON.stringify({ error: 'request_error' }));
-
-    });
-
-    return;
-
-  }
-
   // --- fin API de login ---
 
   // --- fin API del Gantt ---
@@ -352,21 +304,22 @@ const server = http.createServer((req, res) => {
 
   let sanitizeUrl = req.url.split('?')[0];
 
- 
+
 
   // Definir la ruta del archivo solicitado
 
   let filePath = path.join(PUBLIC_DIR, sanitizeUrl === '/' ? 'index.html' : sanitizeUrl);
 
- 
+
 
   // Obtener extensión del archivo
 
+  if (!filePath.startsWith(PUBLIC_DIR + path.sep) && filePath !== PUBLIC_DIR) { res.writeHead(403); res.end(); return; }
   let extname = String(path.extname(filePath)).toLowerCase();
 
   let contentType = mimeTypes[extname] || 'application/octet-stream';
 
- 
+
 
   fs.readFile(filePath, (error, content) => {
 
@@ -418,7 +371,7 @@ const server = http.createServer((req, res) => {
 
 });
 
- 
+
 
 server.listen(PORT, '0.0.0.0', () => {
 

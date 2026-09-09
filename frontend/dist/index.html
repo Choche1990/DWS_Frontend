@@ -8,7 +8,8 @@
       content="DigitalWorkSpace: plataforma modular de dashboards y analítica operacional."
     />
     <title>DigitalWorkSpace</title>
-    <script type="module" crossorigin src="/assets/index-CH10oYab.js"></script>
+    <script src="/session-client.js"></script>
+    <script type="module">await window.dwsSessionReady; await import("/assets/index-CH10oYab.js");</script>
     <link rel="modulepreload" crossorigin href="/assets/charts-BLJCx9fU.js">
     <link rel="stylesheet" crossorigin href="/assets/index-D711VA8l.css">
   </head>

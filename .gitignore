@@ -8,3 +8,5 @@ backend/data/users.csv
 backend/data/independent_tasks.csv
 backend/data/audit_log.csv
 backend/data/*.tmp-*
+
+backend/data/access_log.jsonl
