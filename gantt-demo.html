@@ -1340,6 +1340,49 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     }, {capture:true, passive:false});
 
+    // Board visibility is a per-account preference, separate from task data.
+    template = template.replace(/    addKanbanColumn\(name\) \{[\s\S]*?\n    addKanbanTask\(name\) \{/, `    boardPreferences() {
+      const key = 'dws-task-columns:' + ((this.state.currentUser || {}).email || 'demo');
+      try {
+        const saved = JSON.parse(localStorage.getItem(key) || '{}');
+        return {key, visible:Array.isArray(saved.visible)?saved.visible:[], hidden:Array.isArray(saved.hidden)?saved.hidden:[]};
+      } catch (_) { return {key,visible:[],hidden:[]}; }
+    }
+    visibleBoardColumns(state) {
+      const prefs = this.boardPreferences();
+      const people = this.getScopedPeople(state);
+      return [...new Set([...(state.kanbanColumns || []), ...prefs.visible])]
+        .filter(name => people.includes(name) && !prefs.hidden.includes(name));
+    }
+    canManageBoardColumn(name) {
+      const user = this.state.currentUser || {};
+      return ['admin','owner','jefe','coordinador'].includes(user.rol) && this.getScopedPeople(this.state).includes(name);
+    }
+    addKanbanColumn(name) {
+      if (!this.canManageBoardColumn(name)) return;
+      const prefs = this.boardPreferences();
+      prefs.hidden = prefs.hidden.filter(n => n !== name);
+      prefs.visible = [...new Set([...prefs.visible, name])];
+      localStorage.setItem(prefs.key, JSON.stringify(prefs));
+      this.setState(s => ({kanbanColumns:[...new Set([...s.kanbanColumns,name])],addColumnMenuOpen:false}));
+    }
+    removeKanbanColumn(name) {
+      if (!this.canManageBoardColumn(name)) return;
+      const prefs = this.boardPreferences();
+      prefs.hidden = [...new Set([...prefs.hidden,name])];
+      prefs.visible = prefs.visible.filter(n => n !== name);
+      localStorage.setItem(prefs.key, JSON.stringify(prefs));
+      this.setState(s => ({kanbanColumns:s.kanbanColumns.filter(n => n !== name)}));
+    }
+    addKanbanTask(name) {`);
+    template = template.replace(/const boardColumnNames = [^;]+;/, 'const boardColumnNames = this.visibleBoardColumns(st);');
+    template = template.replace('st.kanbanColumns.indexOf(name) === -1', 'this.canManageBoardColumn(name) && !boardColumnNames.includes(name)');
+    template = template.replace('const noColumns = st.kanbanColumns.length === 0;', 'const noColumns = boardColumnNames.length === 0;');
+    template = template.replace('removeColumn: () => this.removeKanbanColumn(name),', 'canRemoveColumn:this.canManageBoardColumn(name), removeColumn: () => this.removeKanbanColumn(name),');
+    template = template.replace(/<button\b[^>]*sc-camel-on-click="\{\{ col.removeColumn \}\}"[^>]*>/g, tag =>
+      tag.replace(/ sc-camel-disabled="[^"]*"/g, '').replace('<button', '<button sc-camel-disabled="{{ !col.canRemoveColumn }}" title="Quitar de mi tablero; conserva las tareas"')
+    );
+
     // Nested page bundles (iframe targets). Each ships ONCE, in the ROOT
     // document's manifest; frame srcs carry an about:blank#<uuid> marker
     // instead of a substitutable uuid. Every document mints the blobs for

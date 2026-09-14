@@ -12,7 +12,7 @@ const PROFILES = [
   { email:'jmontesdeoca@intercorp.com.pe', nombre:'Jean Pierre', rol:'coordinador', grupo:'datalab', gruposSupervisados:'' },
   { email:'snovoam@intercorp.com.pe', nombre:'Silbana', rol:'analista', grupo:'smartdesk', gruposSupervisados:'' },
   { email:'ffrassinellif@intercorp.com.pe', nombre:'Franchesca', rol:'analista', grupo:'pmo', gruposSupervisados:'' },
-  { email:'pazana@intercorp.com.pe', nombre:'Patty', rol:'jefe', grupo:'', gruposSupervisados:'smartdesk' },
+  { email:'pazana@intercorp.com.pe', nombre:'Patty', rol:'jefe', grupo:'smartdesk', gruposSupervisados:'smartdesk' },
 ];
 function prepareUsers(source, passwords = {}) {
   const rows = source.rows.map(row => ({...row}));

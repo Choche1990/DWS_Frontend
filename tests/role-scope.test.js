@@ -11,7 +11,8 @@ function componentFromBundle(file) {
   const start = html.indexOf('    let template = JSON.parse(templateEl.textContent);');
   const end = html.indexOf('    // Nested page bundles (iframe targets).', start);
   const listeners = {};
-  const context = { templateEl: { textContent: raw }, localStorage: { getItem: () => null, setItem() {} }, window: {}, document: { addEventListener(name, handler) { listeners[name] = handler; } }, DCLogic: class {}, setTimeout, clearTimeout };
+  const storage = new Map();
+  const context = { templateEl: { textContent: raw }, localStorage: { getItem: key => storage.get(key) || null, setItem(key,value) { storage.set(key,value); } }, window: {}, document: { addEventListener(name, handler) { listeners[name] = handler; } }, DCLogic: class {}, setTimeout, clearTimeout };
   vm.createContext(context);
   vm.runInContext(html.slice(start, end) + '\nglobalThis.result = template;', context);
   const script = context.result.slice(context.result.indexOf('class Component extends DCLogic'), context.result.lastIndexOf('</script>'));
@@ -34,6 +35,35 @@ test('supervisors see the union of assigned teams; old group names remain compat
 });
 
 for (const file of ['gantt-demo.html','frontend/dist/modules/Gantt/gantt.html']) {
+  test(file + ' removes board columns without deleting tasks and preserves the choice after refresh', () => {
+    const {ComponentClass,template} = componentFromBundle(file);
+    assert.ok(template.includes('!col.canRemoveColumn'));
+    for (const rol of ['jefe','coordinador']) {
+      const component = new ComponentClass();
+      const tasks = [{id:'a',asignado:'Brian',titulo:'Conservar'}];
+      component.state = {...component.state,currentUser:{email:rol+'@test',rol,grupo:'smartdesk',gruposSupervisados:['smartdesk'],directorio:buildDirectory([])},kanbanTasks:tasks,kanbanColumns:['Brian']};
+      component.setState = update => {component.state={...component.state,...(typeof update==='function'?update(component.state):update)};};
+      component.persistKanbanTasks = () => {throw new Error('Removing a column must not write task data');};
+      component.removeKanbanColumn('Brian');
+      assert.equal(component.state.kanbanTasks,tasks);
+      assert.equal(component.visibleBoardColumns(component.state).includes('Brian'),false);
+      component.state.kanbanColumns=['Brian']; // Server polling reconstructs assignees.
+      assert.equal(component.visibleBoardColumns(component.state).includes('Brian'),false);
+      const reloaded = new ComponentClass();
+      reloaded.state=component.state;
+      assert.equal(reloaded.visibleBoardColumns(reloaded.state).includes('Brian'),false);
+      component.addKanbanColumn('Brian');
+      assert.equal(component.visibleBoardColumns(component.state).includes('Brian'),true);
+      component.addKanbanColumn('Richard'); // Empty columns survive reload/polling too.
+      component.state.kanbanColumns=['Brian'];
+      assert.equal(component.visibleBoardColumns(component.state).includes('Richard'),true);
+      assert.equal(component.canManageBoardColumn('Johannes'),false);
+      component.addKanbanColumn('Johannes');
+      assert.equal(component.visibleBoardColumns(component.state).includes('Johannes'),false);
+      component.state.currentUser={...component.state.currentUser,rol:'analista',nombre:'Brian'};
+      assert.equal(component.canManageBoardColumn('Brian'),false);
+    }
+  });
   test(file + ' commits dates on blur and prevents wheel changes only on the focused date', () => {
     const {template,listeners,document} = componentFromBundle(file);
     const dates = template.match(/<input\b[^>]*type="date"[^>]*>/g);
