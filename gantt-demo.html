@@ -1119,7 +1119,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       isHistory:st.historyOpen, historyTitle:st.historyTitle||'Historial', historyLoading:st.historyLoading, historyError:st.historyError, historyEmpty:!st.historyLoading && !st.historyError && (st.historyRows||[]).length===0, closeHistory:()=>this.closeProjectHistory(),
       historyRows:(st.historyRows||[]).map(h=>({
         title:(h.action==='CREATE'?'Creación':h.action==='DELETE'?'Eliminación':h.field==='estado'?'Cambio de estado':'Cambio de fecha: '+({fechaSolicitud:'solicitud',inicio:'inicio',fin:'fin',finReal:'finalización real'}[h.field]||h.field||'fecha'))+' · '+(h.entityType==='project'?'Proyecto':h.entityType==='independent_task'?'Tarea independiente':'Tarea del proyecto'),
-        subject:(h.entityType==='project'?'Proyecto: ':'Tarea: ')+(h.entityName||(h.action==='CREATE'?h.newValue:h.action==='DELETE'?h.oldValue:'')||('ID '+h.entityId+' (nombre no registrado)'))+(h.entityType==='project_task'&&h.projectName?' · Proyecto: '+h.projectName:''),
+        subject:(h.entityType==='project'?'Proyecto: ':'Tarea: ')+(h.entityName||(h.action==='CREATE'?h.newValue:h.action==='DELETE'?h.oldValue:'')||('ID '+h.entityId+' (nombre no registrado)'))+(h.entityNameSource==='current'?' (nombre actual)':'')+(h.entityType==='project_task'&&h.projectName?' · Proyecto: '+h.projectName:''),
         actor:(h.userName||h.userEmail||'Usuario')+' · '+(h.userRole||''),
         date:(()=>{try{return 'Registrado el: '+new Date(h.timestamp).toLocaleString('es-PE')}catch(e){return h.timestamp}})(),
         detail:h.action==='UPDATE'?('Antes: '+String(h.oldValue||'Sin valor')+' → Después: '+String(h.newValue||'Sin valor')):(h.newValue||h.oldValue||''),
@@ -1248,8 +1248,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     }).catch(()=>this.setState({kanbanTasks:[],kanbanColumns:[],syncBackendError:true}));
     this.independentTasksPoll = setInterval(()=>{
+      if (document.activeElement && document.activeElement.matches('input, select, textarea')) return;
       fetch('/api/independent-tasks').then(r=>{if(!r.ok)throw new Error('load_failed');return r.json()}).then(data=>{
         if(data&&Array.isArray(data.tasks)){
+          if (document.activeElement && document.activeElement.matches('input, select, textarea')) return;
+          if (JSON.stringify(data.tasks) === JSON.stringify(this.state.kanbanTasks)) return;
           const columns=[...new Set(data.tasks.map(t=>t.asignado).filter(Boolean))];
           this.setState({kanbanTasks:data.tasks,kanbanColumns:columns,syncBackendError:false});
         }
@@ -1324,6 +1327,18 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace('sc-camel-on-click="{{ groupMenu.openModal }}"', 'sc-camel-disabled="{{ hasCentralDirectory }}" title="Los equipos se administran en el servidor" sc-camel-on-click="{{ groupMenu.openModal }}"');
     template = template.replace('{{ currentUserRole }}</span>', '{{ currentUserRole }}</span><sc-if value="{{ isReadOnly }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#00792F">Solo consulta</span></sc-if>');
 
+
+    // Commit native date inputs after editing, not on intermediate year/day steps.
+    // Wheel scrolling must not increment a focused date segment.
+    template = template.replace(/<input\b[^>]*type="date"[^>]*>/g, tag =>
+      tag.replace('sc-camel-on-change=', 'sc-camel-on-blur=')
+    );
+    document.addEventListener('wheel', event => {
+      const input = event.target;
+      if (input && input.matches && input.matches('input[type="date"]') && document.activeElement === input) {
+        event.preventDefault();
+      }
+    }, {capture:true, passive:false});
 
     // Nested page bundles (iframe targets). Each ships ONCE, in the ROOT
     // document's manifest; frame srcs carry an about:blank#<uuid> marker

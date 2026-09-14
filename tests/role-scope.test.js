@@ -10,12 +10,13 @@ function componentFromBundle(file) {
   const raw = /<script type="__bundler\/template">([\s\S]*?)<\/script>/.exec(html)[1];
   const start = html.indexOf('    let template = JSON.parse(templateEl.textContent);');
   const end = html.indexOf('    // Nested page bundles (iframe targets).', start);
-  const context = { templateEl: { textContent: raw }, localStorage: { getItem: () => null, setItem() {} }, window: {}, document: {}, DCLogic: class {}, setTimeout, clearTimeout };
+  const listeners = {};
+  const context = { templateEl: { textContent: raw }, localStorage: { getItem: () => null, setItem() {} }, window: {}, document: { addEventListener(name, handler) { listeners[name] = handler; } }, DCLogic: class {}, setTimeout, clearTimeout };
   vm.createContext(context);
   vm.runInContext(html.slice(start, end) + '\nglobalThis.result = template;', context);
   const script = context.result.slice(context.result.indexOf('class Component extends DCLogic'), context.result.lastIndexOf('</script>'));
   vm.runInContext(script + '\nglobalThis.ComponentClass = Component;', context);
-  return { ComponentClass: context.ComponentClass, template: context.result };
+  return { ComponentClass: context.ComponentClass, template: context.result, listeners, document:context.document };
 }
 
 test('supervisors see the union of assigned teams; old group names remain compatible', () => {
@@ -33,6 +34,55 @@ test('supervisors see the union of assigned teams; old group names remain compat
 });
 
 for (const file of ['gantt-demo.html','frontend/dist/modules/Gantt/gantt.html']) {
+  test(file + ' commits dates on blur and prevents wheel changes only on the focused date', () => {
+    const {template,listeners,document} = componentFromBundle(file);
+    const dates = template.match(/<input\b[^>]*type="date"[^>]*>/g);
+    assert.ok(dates.length > 0);
+    for (const tag of dates) {
+      assert.ok(tag.includes('sc-camel-on-blur='));
+      assert.ok(!tag.includes('sc-camel-on-change='));
+    }
+    const input = {matches:()=>true};
+    let prevented = 0;
+    const event = {target:input,preventDefault:()=>prevented++};
+    listeners.wheel(event);
+    assert.equal(prevented,0);
+    document.activeElement=input;
+    listeners.wheel(event);
+    assert.equal(prevented,1);
+    input.matches=()=>false;
+    listeners.wheel(event);
+    assert.equal(prevented,1);
+  });
+  test(file + ' polling leaves active date edits and unchanged task state alone', async () => {
+    const {ComponentClass} = componentFromBundle(file);
+    const mount = ComponentClass.prototype.componentDidMount.toString();
+    const start = mount.indexOf('this.independentTasksPoll = setInterval(');
+    const end = mount.indexOf('},5000);', start) + '},5000);'.length;
+    assert.ok(start >= 0 && end > start);
+    let poll, requests = 0, updates = 0, resolveResponse;
+    const doc = {activeElement:{matches:()=>true}};
+    const component = {state:{kanbanTasks:[]},setState:()=>updates++};
+    const fetch = () => { requests++; return new Promise(resolve=>{resolveResponse=resolve;}); };
+    new Function('setInterval','fetch','document',mount.slice(start,end)).call(component, fn=>{poll=fn;},fetch,doc);
+    poll();
+    assert.equal(requests,0);
+    doc.activeElement=null;
+    poll();
+    doc.activeElement={matches:()=>true};
+    resolveResponse({ok:true,json:async()=>({tasks:[{id:'a'}]})});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(updates,0); // Editing began while the request was in flight.
+    doc.activeElement=null;
+    poll();
+    resolveResponse({ok:true,json:async()=>({tasks:[]})});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(updates,0);
+    poll();
+    resolveResponse({ok:true,json:async()=>({tasks:[{id:'a',asignado:'Anyela'}]})});
+    await new Promise(resolve=>setImmediate(resolve));
+    assert.equal(updates,1);
+  });
   test(file + ' applies scopes, preserves history methods and allows jefe mutations', () => {
     const {ComponentClass,template} = componentFromBundle(file);
     const component = new ComponentClass();

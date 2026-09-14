@@ -27,3 +27,33 @@ test('history preserves event names and distinguishes project/task changes',()=>
   assert.equal(rows.filter(r=>r.action==='CREATE').length,2);
  } finally { fs.rmSync(dir,{recursive:true,force:true}); }
 });
+
+test('legacy history resolves names by project and task without changing the audit file',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'gantt-legacy-history-'));
+ try {
+  for(const file of ['ganttStore.js','auditStore.js','csvStore.js']) fs.copyFileSync(path.join(__dirname,'../backend',file),path.join(dir,file));
+  fs.mkdirSync(path.join(dir,'data'));
+  const {saveGantt}=require(path.join(dir,'ganttStore.js'));
+  const {appendAudit,loadProjectHistory}=require(path.join(dir,'auditStore.js'));
+  saveGantt({actorRole:'admin',projects:[
+   {id:1,nombre:'Proyecto A',tareas:[{id:2,nombre:'Tarea A'}]},
+   {id:3,nombre:'Proyecto B',tareas:[{id:2,nombre:'Tarea B'}]},
+  ]});
+  appendAudit([
+   {projectId:1,entityType:'project_task',entityId:2,field:'inicio',oldValue:'2026-09-01',newValue:'2026-09-02'},
+   {projectId:3,entityType:'project_task',entityId:2,field:'inicio',oldValue:'2026-09-01',newValue:'2026-09-02'},
+   {projectId:1,entityType:'project_task',entityId:99,field:'inicio'},
+   {projectId:1,entityType:'project_task',entityId:100,action:'DELETE',oldValue:'Tarea eliminada'},
+  ]);
+  const auditFile=path.join(dir,'data/audit_log.csv');
+  const before=fs.readFileSync(auditFile);
+  const rows=loadProjectHistory(1);
+  const legacy=rows.find(r=>r.entityId==='2'&&r.action==='UPDATE');
+  assert.equal(legacy.entityName,'Tarea A');
+  assert.equal(legacy.entityNameSource,'current');
+  assert.equal(loadProjectHistory(3).find(r=>r.action==='UPDATE').entityName,'Tarea B');
+  assert.equal(rows.find(r=>r.entityId==='99').entityNameSource,'unknown');
+  assert.equal(rows.find(r=>r.entityId==='100').entityName,'Tarea eliminada');
+  assert.deepEqual(fs.readFileSync(auditFile),before);
+ } finally { fs.rmSync(dir,{recursive:true,force:true}); }
+});

@@ -40,25 +40,47 @@ function appendAudit(entries, actor = {}) {
   writeCSVFileAtomic(AUDIT_CSV, HEADERS, current.concat(rows));
 }
 
+// Legacy events did not store names. Supply a clearly marked current reference,
+// without rewriting historical evidence or confusing task IDs across projects.
+function withCurrentNames(rows) {
+  const readRows = name => {
+    const file = path.join(DATA_DIR, name);
+    return fs.existsSync(file) ? readCSVFile(file).rows : [];
+  };
+  const projects = new Map(readRows('projects.csv').map(p => [String(p.id), p.nombre]));
+  const tasks = new Map(readRows('tasks.csv').map(t => [JSON.stringify([String(t.projectId), String(t.id)]), t.nombre]));
+  const independent = new Map(readRows('independent_tasks.csv').map(t => [String(t.id), t.titulo]));
+  return rows.map(row => {
+    const projectName = projects.get(String(row.projectId)) || '';
+    const currentName = row.entityType === 'project_task'
+      ? tasks.get(JSON.stringify([String(row.projectId), String(row.entityId)]))
+      : row.entityType === 'independent_task' ? independent.get(String(row.entityId)) : projectName;
+    const eventName = row.entityName || (row.action === 'CREATE' ? row.newValue : row.action === 'DELETE' ? row.oldValue : '');
+    return {...row, entityName:eventName || currentName || '',
+      entityNameSource:eventName ? 'event' : currentName ? 'current' : 'unknown',
+      projectName:row.projectName || projectName};
+  });
+}
+
 function loadProjectHistory(projectId) {
   ensureAuditFile();
-  return readCSVFile(AUDIT_CSV).rows
+  return withCurrentNames(readCSVFile(AUDIT_CSV).rows
     .filter((row) => String(row.projectId) === String(projectId))
     .filter((row) => {
       if (row.action === 'CREATE' || row.action === 'DELETE') return row.entityType === 'project' || row.entityType === 'project_task';
       return row.action === 'UPDATE' && (row.field === 'fechaSolicitud' || row.field === 'inicio' || row.field === 'fin' || row.field === 'finReal' || row.field === 'estado');
     })
-    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp))));
 }
 
 function loadIndependentTaskHistory(taskId) {
   if (taskId == null || String(taskId).trim() === '') throw new Error('task_id_required');
   ensureAuditFile();
-  return readCSVFile(AUDIT_CSV).rows
+  return withCurrentNames(readCSVFile(AUDIT_CSV).rows
     .filter((row) => row.entityType === 'independent_task')
     .filter((row) => String(row.entityId) === String(taskId))
     .filter((row) => row.action === 'CREATE' || row.action === 'DELETE' || (row.action === 'UPDATE' && (row.field === 'inicio' || row.field === 'fin' || row.field === 'estado')))
-    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)));
+    .sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp))));
 }
 
 module.exports = { ensureAuditFile, appendAudit, loadProjectHistory, loadIndependentTaskHistory };
