@@ -8,7 +8,7 @@ const AUDIT_CSV = path.join(DATA_DIR, 'audit_log.csv');
 const HEADERS = [
   'changeId', 'timestamp', 'userEmail', 'userName', 'userRole',
   'action', 'entityType', 'entityId', 'projectId', 'field',
-  'oldValue', 'newValue',
+  'oldValue', 'newValue', 'entityName', 'projectName',
 ];
 
 function ensureAuditFile() {
@@ -32,6 +32,8 @@ function appendAudit(entries, actor = {}) {
     entityId: entry.entityId == null ? '' : entry.entityId,
     projectId: entry.projectId == null ? '' : entry.projectId,
     field: entry.field || '',
+    entityName: entry.entityName || '',
+    projectName: entry.projectName || '',
     oldValue: entry.oldValue == null ? '' : String(entry.oldValue),
     newValue: entry.newValue == null ? '' : String(entry.newValue),
   }));

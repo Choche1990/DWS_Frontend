@@ -35,6 +35,8 @@
         const url = typeof input === 'string' ? input : (input && input.url) || '';
         const method = String(options.method || (input && input.method) || 'GET').toUpperCase();
 
+        if (url === '/api/session') return jsonResponse({user:readJson('digital-workspace-user', null)});
+
         if (url.startsWith('/api/gantt')) {
           if (method === 'GET') {
             const saved = readJson(GANTT_KEY, null);
@@ -881,7 +883,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     <div style="padding:20px 22px;border-bottom:1px solid #E6EAEE;display:flex;align-items:center;gap:12px"><div style="flex:1"><div style="font-size:11px;color:#8A95A1;text-transform:uppercase;font-weight:700">Trazabilidad</div><div style="font-size:18px;font-weight:700;margin-top:3px">{{ historyTitle }}</div></div><button sc-camel-on-click="{{ closeHistory }}" style="width:30px;height:30px;border:none;border-radius:8px;background:#F1F3F5;cursor:pointer">×</button></div>
     <div style="flex:1;overflow-y:auto;padding:18px 22px">
       <sc-if value="{{ historyLoading }}" hint-placeholder-val="{{ false }}"><div style="padding:30px;text-align:center;color:#8A95A1">Cargando historial…</div></sc-if>
-      <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="4"><div style="position:relative;padding:0 0 18px 22px;border-left:2px solid #E6EAEE"><span style="position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;background:#05BE50"></span><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:12.5px">{{ h.title }}</strong><span style="{{ h.toneStyle }};padding:2px 7px;border-radius:999px;font-size:9px;font-weight:700">CAMBIO</span></div><div style="font-size:11px;color:#6B7684;margin-top:4px">{{ h.actor }}</div><div style="font-size:10px;color:#A0AAB4;margin-top:2px">{{ h.date }}</div><div style="font-size:11.5px;color:#3A4756;background:#F7F9FA;border-radius:8px;padding:8px 10px;margin-top:7px;word-break:break-word">{{ h.detail }}</div></div></sc-for>
+      <sc-for list="{{ historyRows }}" as="h" hint-placeholder-count="4"><div style="position:relative;padding:0 0 18px 22px;border-left:2px solid #E6EAEE"><span style="position:absolute;left:-6px;top:2px;width:10px;height:10px;border-radius:50%;background:#05BE50"></span><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><strong style="font-size:12.5px">{{ h.title }}</strong><span style="{{ h.toneStyle }};padding:2px 7px;border-radius:999px;font-size:9px;font-weight:700">CAMBIO</span></div><div style="font-size:12px;color:#3A4756;margin-top:5px;word-break:break-word">{{ h.subject }}</div><div style="font-size:11px;color:#6B7684;margin-top:4px">{{ h.actor }}</div><div style="font-size:10px;color:#A0AAB4;margin-top:2px">{{ h.date }}</div><div style="font-size:11.5px;color:#3A4756;background:#F7F9FA;border-radius:8px;padding:8px 10px;margin-top:7px;word-break:break-word">{{ h.detail }}</div></div></sc-for>
       <sc-if value="{{ historyError }}" hint-placeholder-val="{{ false }}"><div style="padding:18px;border-radius:10px;background:#FBE4E4;color:#9B2C2C">No se pudo consultar el historial. Verifica la conexión con el backend central actualizado.</div></sc-if>
       <sc-if value="{{ historyEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:30px;text-align:center;color:#8A95A1">Todavía no hay cambios registrados.</div></sc-if>
     </div>
@@ -1116,10 +1118,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       isObjectivePanel:st.objectivePanelOpen, objectiveTrackingRows:(sel&&sel.objectiveTrackingRows)||[], objectivesTrackingEmpty:!sel||!(sel.objectiveTrackingRows||[]).length, addTrackingObjective:(sel&&sel.addObjective)||(()=>{}), closeObjectivePanel:()=>this.setState({objectivePanelOpen:false}),
       isHistory:st.historyOpen, historyTitle:st.historyTitle||'Historial', historyLoading:st.historyLoading, historyError:st.historyError, historyEmpty:!st.historyLoading && !st.historyError && (st.historyRows||[]).length===0, closeHistory:()=>this.closeProjectHistory(),
       historyRows:(st.historyRows||[]).map(h=>({
-        title:h.action==='CREATE'?(h.entityType==='project'?'Creación del proyecto':h.entityType==='independent_task'?'Tarea independiente agregada':'Tarea agregada al proyecto'):h.action==='DELETE'?(h.entityType==='project'?'Eliminación del proyecto':h.entityType==='independent_task'?'Tarea independiente eliminada':'Tarea eliminada del proyecto'):(h.field==='estado'?'Cambio de estado':'Cambio de fecha: '+({fechaSolicitud:'solicitud',inicio:'inicio',fin:'fin',finReal:'finalización real'}[h.field]||h.field||'fecha')),
+        title:(h.action==='CREATE'?'Creación':h.action==='DELETE'?'Eliminación':h.field==='estado'?'Cambio de estado':'Cambio de fecha: '+({fechaSolicitud:'solicitud',inicio:'inicio',fin:'fin',finReal:'finalización real'}[h.field]||h.field||'fecha'))+' · '+(h.entityType==='project'?'Proyecto':h.entityType==='independent_task'?'Tarea independiente':'Tarea del proyecto'),
+        subject:(h.entityType==='project'?'Proyecto: ':'Tarea: ')+(h.entityName||(h.action==='CREATE'?h.newValue:h.action==='DELETE'?h.oldValue:'')||('ID '+h.entityId+' (nombre no registrado)'))+(h.entityType==='project_task'&&h.projectName?' · Proyecto: '+h.projectName:''),
         actor:(h.userName||h.userEmail||'Usuario')+' · '+(h.userRole||''),
-        date:(()=>{try{return new Date(h.timestamp).toLocaleString('es-PE')}catch(e){return h.timestamp}})(),
-        detail:h.action==='UPDATE'?(String(h.oldValue||'—')+' → '+String(h.newValue||'—')):(h.newValue||h.oldValue||''),
+        date:(()=>{try{return 'Registrado el: '+new Date(h.timestamp).toLocaleString('es-PE')}catch(e){return h.timestamp}})(),
+        detail:h.action==='UPDATE'?('Antes: '+String(h.oldValue||'Sin valor')+' → Después: '+String(h.newValue||'Sin valor')):(h.newValue||h.oldValue||''),
         toneStyle:h.action==='DELETE'?'background:#FBE4E4;color:#B23B3B':h.action==='CREATE'?'background:#E3F7EC;color:#00792F':'background:#E7F0FF;color:#0039A6'
       })),`
     );
@@ -1129,14 +1132,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     );
     template = template.replace(
       '      addProject:()=>this.addProject(),',
-      "      addProject:()=>this.addProject(), canDelete:!!st.currentUser && (st.currentUser.rol==='admin' || st.currentUser.rol==='coordinador' || st.currentUser.rol==='owner'),"
+      "      addProject:()=>this.addProject(), canDelete:!!st.currentUser && (st.currentUser.rol==='admin' || st.currentUser.rol==='coordinador' || st.currentUser.rol==='jefe' || st.currentUser.rol==='owner'),"
     );
     template = template.replace(
       "{ label:'En proceso', value:cnt('En proceso'), suffix:'', hint:'activos actualmente', color:'color:#05BE50' },",
       "{ label:'En proceso', value:cnt('En proceso'), suffix:'', hint:(cnt('En proceso')-retrasados)+' a tiempo · '+retrasados+' retrasados', color:'color:#05BE50' },"
     );
 
-    // El tachito solo se presenta a coordinadores, owners y administradores.
+    // El tachito solo se presenta a jefes, coordinadores, owners y administradores.
     template = template.replace(
       /<button sc-camel-on-click="\{\{ r\.del \}\}" class="ib-del-btn"([\s\S]*?)<\/button>/,
       '<sc-if value="{{ canDelete }}" hint-placeholder-val="{{ false }}"><button sc-camel-on-click="{{ r.del }}" class="ib-del-btn"$1</button></sc-if>'
@@ -1231,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       fetch('/api/independent-task',{method:'DELETE',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,actor:{email:user.email||'',name:user.nombre||'',role:String(user.rol||'').trim().toLowerCase()}})}).then(r=>{
         if(!r.ok) throw new Error('delete_failed');
         this.setState(s=>({kanbanTasks:s.kanbanTasks.filter(t=>t.id!==id)}));
-      }).catch(()=>window.alert('No fue posible eliminar la tarea. Solo coordinadores u owners pueden hacerlo.'));
+      }).catch(()=>window.alert('No fue posible eliminar la tarea. Solo jefes, coordinadores u owners pueden hacerlo.'));
     }`
     );
     template = template.replace(
@@ -1260,6 +1263,67 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // Normaliza el score`
     );
+
+    // Central team membership and multi-team supervisors. Full project state is
+    // retained for all writers, including jefes; the view filters supervised teams.
+    template = template.replace(/  getScopedProjects\(state\) \{[\s\S]*?\n  \}/, `  getOrgState(state) {
+    const user = state.currentUser || {};
+    const normalize = value => String(value || '').trim().toLowerCase() === 'proyectos' ? 'pmo' : String(value || '').trim().toLowerCase();
+    const directory = user.directorio;
+    const personGroups = directory ? directory.personGroups : Object.fromEntries(Object.entries(state.personGroups || {}).map(([n,g]) => [n,normalize(g)]));
+    let groups = directory ? directory.groups : (state.groups || []).map(g => ({...g,id:normalize(g.id),name:normalize(g.id)==='pmo'?'PMO':g.name}));
+    if (user.rol === 'jefe') groups = groups.filter(g => (user.gruposSupervisados || []).includes(g.id));
+    const activeGroupId = normalize(state.activeGroupId) || null;
+    return {...state, personGroups, groups, activeGroupId};
+  }
+  getScopedPeople(state) {
+    const st = this.getOrgState(state), user = st.currentUser;
+    if (!user || user.rol === 'admin' || user.rol === 'owner') return Object.keys(this.TEAM);
+    if (user.rol === 'analista') return [user.nombre];
+    const groups = user.rol === 'jefe' ? (user.gruposSupervisados || []) : [user.grupo === 'proyectos' ? 'pmo' : String(user.grupo || '').toLowerCase()];
+    return Object.keys(st.personGroups).filter(n => groups.includes(st.personGroups[n]));
+  }
+  getScopedProjects(state) {
+    const user = state.currentUser;
+    if (!user || user.rol === 'admin' || user.rol === 'owner') return state.projects;
+    const members = this.getScopedPeople(state);
+    return state.projects.filter(p => members.includes(p.asignado));
+  }
+
+`);
+    template = template.replace('  componentDidMount() {', `  async componentDidMount() {
+    try {
+      const response = await fetch('/api/session');
+      if (!response.ok) throw new Error('session_required');
+      const session = await response.json();
+      this.setState({currentUser:session.user, activeGroupId:null, fAsignado:[]});
+      localStorage.setItem('digital-workspace-user', JSON.stringify(session.user));
+    } catch (e) { this.setState({projects:[],kanbanTasks:[],syncBackendError:true}); return; }
+`);
+    template = template.replace(/const scopedPeople = st.currentUser[\s\S]*?: Object.keys\(this.TEAM\);/, 'const scopedPeople = this.getScopedPeople(st);');
+    template = template.replace(/const roleIndependentTasks=st.kanbanTasks.filter\(t=>[\s\S]*?; const dashboardTaskAssignees=/, 'const roleIndependentTasks=st.kanbanTasks.filter(t=>this.getScopedPeople(st).includes(t.asignado)); const dashboardTaskAssignees=');
+    template = template.replace('const st = this.state, q = st.query.trim().toLowerCase();', 'const st = this.getOrgState(this.state), q = st.query.trim().toLowerCase();');
+    template = template.replace('      currentUserName:', "      isReadOnly:false, hasCentralDirectory:!!(st.currentUser && st.currentUser.directorio),\n      currentUserName:");
+    template = template.replace('const members = Object.keys(s.personGroups).filter(n => s.personGroups[n] === id);', 'const org = this.getOrgState(s); const members = Object.keys(org.personGroups).filter(n => org.personGroups[n] === id);');
+    const renderAt = template.indexOf('  renderVals() {');
+    if (renderAt < 0) throw new Error('role_scope_render_anchor_missing');
+    template = template.slice(0, renderAt) + template.slice(renderAt).replaceAll('Object.keys(this.TEAM)', 'this.getScopedPeople(st)');
+    // Registered membership comes from the server, not a browser-local drag/drop.
+    template = template.replace('  setPersonGroup(name, groupId) {', '  setPersonGroup(name, groupId) { if (this.state.currentUser && this.state.currentUser.directorio) return;');
+    template = template.replace(/<(input|select|textarea)\b[^>]*>/g, tag => {
+      if (tag.includes('onQuery')) return tag;
+      if (tag.includes('sc-camel-disabled=')) return tag.replace(/sc-camel-disabled="\{\{([\s\S]*?)\}\}"/, 'sc-camel-disabled="{{ isReadOnly || ($1) }}"');
+      if (tag.includes('disabled=')) return tag;
+      return tag.replace(/^<(input|select|textarea)/, '$& sc-camel-disabled="{{ isReadOnly }}"');
+    });
+    template = template.replace(/<button\b[^>]*>/g, tag => {
+      const event = /sc-camel-on-click="\{\{\s*([^}]+)/.exec(tag);
+      if (!event || tag.includes('disabled=') || !/(^|\.)(add\w*|del\w*|remove\w*|onRemove|onDelete|onMoneda\w*|confirmAcceptance|toggleAddColumnMenu)\b/.test(event[1])) return tag;
+      return tag.replace('<button', '<button sc-camel-disabled="{{ isReadOnly }}"');
+    });
+    template = template.replace('sc-camel-on-click="{{ groupMenu.openModal }}"', 'sc-camel-disabled="{{ hasCentralDirectory }}" title="Los equipos se administran en el servidor" sc-camel-on-click="{{ groupMenu.openModal }}"');
+    template = template.replace('{{ currentUserRole }}</span>', '{{ currentUserRole }}</span><sc-if value="{{ isReadOnly }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;color:#00792F">Solo consulta</span></sc-if>');
+
 
     // Nested page bundles (iframe targets). Each ships ONCE, in the ROOT
     // document's manifest; frame srcs carry an about:blank#<uuid> marker

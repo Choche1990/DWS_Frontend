@@ -23,7 +23,7 @@ Prueba HTTP aislada, con usuarios simulados y registro temporal: autenticacion, 
 
 ## Publicacion en la PC servidor
 
-Copiar server.js, backend/sessionStore.js y los archivos modificados de frontend/dist mediante OneDrive. Conservar backend/data de la PC servidor: no reemplazar cuentas, datos ni registros con los de desarrollo. Detener y volver a ejecutar node server.js desde CMD. Todos los usuarios deben iniciar sesion nuevamente despues del reinicio.
+Actualizar el repositorio con `git pull --ff-only`, con el servidor detenido, y volver a ejecutar `node server.js`. El codigo nuevo y modificado debe publicarse en el mismo commit. Los datos de `backend/data` permanecen locales. Consultar [el flujo de actualizacion por Git](actualizacion-jefes.md). Todos los usuarios deben iniciar sesion nuevamente despues del reinicio.
 
 El enlace Control de accesos aparece para administradores con sesion validada. Tambien se puede abrir /access-control.html. El informe permite actualizar los conteos. La demo independiente gantt-demo.html no forma parte de la plataforma autenticada.
 

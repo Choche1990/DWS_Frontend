@@ -10,3 +10,10 @@ backend/data/audit_log.csv
 backend/data/*.tmp-*
 
 backend/data/access_log.jsonl
+
+# Private delivery artifacts and backups supplied by the user.
+entrega-jefes/
+
+# Credenciales y respaldos locales de la migracion; nunca se publican con el codigo.
+claves-usuarios.json
+backend/data-backup-*/

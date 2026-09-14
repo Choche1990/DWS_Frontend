@@ -169,10 +169,10 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
   const previousProjectsById = new Map(prevProjectsCsv.rows.map((r) => [Number(r.id), r]));
   const previousTasksByKey = new Map(prevTasksCsv.rows.map((r) => [r.projectId + '::' + r.id, r]));
 
-  // Solo coordinadores, owners y administradores pueden eliminar. La misma regla se
+  // Solo jefes, coordinadores, owners y administradores pueden eliminar. La misma regla se
   // valida aqui para no depender exclusivamente del boton de la interfaz.
   const normalizedRole = String(actorRole || '').trim().toLowerCase();
-  const canDelete = normalizedRole === 'admin' || normalizedRole === 'coordinador' || normalizedRole === 'owner';
+  const canDelete = normalizedRole === 'admin' || normalizedRole === 'coordinador' || normalizedRole === 'jefe' || normalizedRole === 'owner';
   const incomingProjectIds = new Set(projects.map((p) => Number(p.id)));
   for (const previous of prevProjectsCsv.rows) {
     if (!canDelete && !incomingProjectIds.has(Number(previous.id))) {
@@ -242,6 +242,17 @@ function saveGantt({ projects, actorRole, actorEmail, actorName }) {
 
   writeCSVFileAtomic(PROJECTS_CSV, PROJECTS_HEADERS, projectRows);
   writeCSVFileAtomic(TASKS_CSV, TASKS_HEADERS, taskRows);
+  // Preserve the names at the time of the event, even after renaming/deletion.
+  for (const entry of auditEntries) {
+    const project = projectRows.find(row => String(row.id) === String(entry.projectId))
+      || previousProjectsById.get(Number(entry.projectId));
+    const task = entry.entityType === 'project_task'
+      ? taskRows.find(row => String(row.projectId) === String(entry.projectId) && String(row.id) === String(entry.entityId))
+        || previousTasksByKey.get(String(entry.projectId) + '::' + String(entry.entityId))
+      : null;
+    entry.projectName = project ? project.nombre : '';
+    entry.entityName = task ? task.nombre : entry.projectName;
+  }
   appendAudit(auditEntries, { email: actorEmail, name: actorName, role: normalizedRole });
 }
 

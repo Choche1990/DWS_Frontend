@@ -7,6 +7,7 @@ const path = require('path');
 
 const { ensureDataFiles, loadGantt, saveGantt } = require('./backend/ganttStore');
 const { ensureUsersFile } = require('./backend/usersStore');
+const { isJefe, canViewAssignment } = require('./backend/teamScope');
 const { ensureIndependentTasksFile, loadIndependentTasks, saveIndependentTasks, upsertIndependentTask, deleteIndependentTask } = require('./backend/independentTasksStore');
 const { ensureAuditFile, loadProjectHistory, loadIndependentTaskHistory } = require('./backend/auditStore');
 const { buildProjectCharter, safeFileName } = require('./backend/projectCharterStore');
@@ -76,11 +77,26 @@ const server = http.createServer((req, res) => {
   const apiPath = req.url.split('?')[0];
   if (auth.handle(req, res)) return;
 
+  // Supervisors may consult only the teams assigned in users.csv.
+  if (isJefe(req.authUser) && ['/api/project-history', '/api/project-charter', '/api/project-acceptance'].includes(apiPath)) {
+    const query = new URL(req.url, 'http://localhost').searchParams;
+    const independent = apiPath === '/api/project-history' && query.get('scope') === 'independent';
+    const record = independent
+      ? loadIndependentTasks().tasks.find(t => String(t.id) === query.get('taskId'))
+      : loadGantt().projects.find(p => String(p.id) === query.get('projectId'));
+    if (!record || !canViewAssignment(req.authUser, record.asignado)) {
+      res.writeHead(403, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: 'team_forbidden' }));
+      return;
+    }
+  }
+
   if (apiPath === '/api/gantt' && req.method === 'GET') {
 
     try {
 
       const data = loadGantt();
+      // Writers receive complete state so saving does not remove other teams.
 
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
 
@@ -151,7 +167,9 @@ const server = http.createServer((req, res) => {
   if (apiPath === '/api/independent-tasks' && req.method === 'GET') {
     try {
       res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify(loadIndependentTasks()));
+      const data = loadIndependentTasks();
+      // Keep complete task state, as for coordinators.
+      res.end(JSON.stringify(data));
     } catch (error) {
       res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ error: 'independent_tasks_load_failed', message: String(error.message || error) }));
@@ -326,6 +344,14 @@ const server = http.createServer((req, res) => {
     if (error) {
 
       if (error.code === 'ENOENT') {
+
+        // An iframe/module must never receive the SPA shell in place of its file.
+        // Doing so mounts another navigation shell inside the existing one.
+        if (extname || sanitizeUrl.startsWith('/modules/') || sanitizeUrl.startsWith('/assets/')) {
+          res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+          res.end('Archivo no encontrado: ' + sanitizeUrl + '\nVerifica que la actualizacion se haya copiado conservando las carpetas dentro de frontend/dist.');
+          return;
+        }
 
         // Soporte SPA (Single Page Application para React/Vue/Angular):
 

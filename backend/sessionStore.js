@@ -55,6 +55,7 @@ function createAuth({ authenticate = findUser, now = Date.now, logFile = path.jo
     const module = p.startsWith('/modules/AutoatencionIA/') ? 'autoatencion-ia' : (p.startsWith('/modules/Gantt/') || ganttApis.includes(p)) ? 'gantt' : null;
     if (!module) { reply(res,404,{error:'not_found'}); return true; }
     if(req.authActor.role!=='admin'&&!(session.user.modulos||[]).includes(module)){reply(res,403,{error:'module_forbidden'});return true;}
+
     if(p==='/modules/Gantt/gantt.html'&&req.method==='GET')log('GANTT_ENTER',session.user);
     return false;
   }

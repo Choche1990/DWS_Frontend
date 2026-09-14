@@ -44,7 +44,7 @@ function saveIndependentTasks({ tasks, actor = {} }) {
   const previous = readCSVFile(TASKS_CSV).rows;
   const previousById = new Map(previous.map((row) => [String(row.id), row]));
   const role = String(actor.role || '').trim().toLowerCase();
-  const canDelete = role === 'admin' || role === 'coordinador' || role === 'owner';
+  const canDelete = role === 'admin' || role === 'coordinador' || role === 'jefe' || role === 'owner';
   const incomingIds = new Set(tasks.map((task) => String(task.id)));
   if (!canDelete && previous.some((row) => !incomingIds.has(String(row.id)))) {
     throw new Error('independent_task_deletion_not_allowed');
@@ -90,6 +90,10 @@ function saveIndependentTasks({ tasks, actor = {} }) {
     if (!incomingIds.has(String(prev.id))) auditEntries.push({ action: 'DELETE', entityType: 'independent_task', entityId: prev.id, oldValue: prev.titulo || 'Tarea independiente' });
   }
   writeCSVFileAtomic(TASKS_CSV, HEADERS, rows);
+  for (const entry of auditEntries) {
+    const task = rows.find(row => String(row.id) === String(entry.entityId)) || previousById.get(String(entry.entityId));
+    entry.entityName = task ? task.titulo : '';
+  }
   appendAudit(auditEntries, { email: actor.email || '', name: actor.name || '', role });
   return { tasks: rows.map(rowToTask) };
 }
@@ -106,7 +110,7 @@ function upsertIndependentTask({ task, actor = {} }) {
 function deleteIndependentTask({ id, actor = {} }) {
   ensureIndependentTasksFile();
   const role = String(actor.role || '').trim().toLowerCase();
-  if (role !== 'admin' && role !== 'coordinador' && role !== 'owner') throw new Error('independent_task_deletion_not_allowed');
+  if (role !== 'admin' && role !== 'coordinador' && role !== 'jefe' && role !== 'owner') throw new Error('independent_task_deletion_not_allowed');
   const current = loadIndependentTasks().tasks;
   return saveIndependentTasks({ tasks: current.filter((task) => String(task.id) !== String(id)), actor });
 }
