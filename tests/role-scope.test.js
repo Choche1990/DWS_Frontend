@@ -37,10 +37,25 @@ test('supervisors see the union of assigned teams; old group names remain compat
 for (const file of ['gantt-demo.html','frontend/dist/modules/Gantt/gantt.html']) {
   test(file + ' includes Patty in SmartDesk filters and task options with legacy server accounts', () => {
     const patty = {email:'pazana@intercorp.com.pe',nombre:'Patty',rol:'jefe',grupo:'',gruposSupervisados:['smartdesk']};
-    const directorio = buildDirectory([patty]);
+    const directorio = buildDirectory([patty,
+      {email:'bperezc@intercorp.com.pe',nombre:'Mauricio',rol:'jefe',grupo:'',gruposSupervisados:['datalab','pmo']},
+      {email:'pvallejoe@intercorp.com.pe',nombre:'Paolo',rol:'jefe',grupo:'',gruposSupervisados:['datalab','pmo','smartdesk']},
+    ]);
     assert.equal(directorio.personGroups.Patty,'smartdesk');
     assert.equal(buildDirectory([{...patty,grupo:'pmo'}]).personGroups.Patty,'pmo');
     const {ComponentClass} = componentFromBundle(file);
+    for (const [grupo, expected] of [['datalab',['Mauricio','Paolo']],['pmo',['Mauricio','Paolo']],['smartdesk',['Paolo']],['presupuesto',[]]]) {
+      const component = new ComponentClass();
+      component.props = {};
+      const currentUser={rol:'coordinador',grupo,directorio};
+      component.state={...component.state,currentUser,projects:[],kanbanTasks:[],kanbanColumns:[]};
+      const rendered=component.renderVals();
+      const leaders=rendered.asignadoMenu.options.map(o=>o.value).filter(n=>['Mauricio','Paolo'].includes(n));
+      assert.deepEqual(Array.from(leaders),expected);
+      assert.ok(component.getOrgState(component.state).groups.some(g=>g.id==='lideres' && g.name==='Jefes / líderes'));
+      const assignments=[{asignado:'Mauricio'},{asignado:'Paolo'}];
+      assert.deepEqual(scopeProjects({rol:'jefe',gruposSupervisados:[grupo],directorio},assignments).map(p=>p.asignado),expected);
+    }
     for (const rol of ['jefe','coordinador','admin']) {
       const component = new ComponentClass();
       component.props = {};
@@ -49,6 +64,15 @@ for (const file of ['gantt-demo.html','frontend/dist/modules/Gantt/gantt.html'])
       assert.ok(rendered.asignadoMenu.options.some(option=>option.value==='Patty'));
       assert.ok(rendered.teamNames.includes('Patty'));
       assert.ok(rendered.addColumnOptions.some(option=>option.name==='Patty'));
+      for (const name of ['Mauricio','Paolo']) {
+        assert.equal(directorio.personGroups[name],'lideres');
+        const visible = name === 'Paolo' || rol === 'admin';
+        assert.equal(rendered.asignadoMenu.options.some(option=>option.value===name),visible);
+        assert.equal(rendered.teamNames.includes(name),visible);
+        assert.equal(rendered.addColumnOptions.some(option=>option.name===name),visible);
+      }
+      component.state.historyRows=[{entityType:'project_task',entityName:'Documentación',entityNameSource:'current',projectName:'New My Digital WorkSpace',action:'UPDATE',field:'inicio'}];
+      assert.equal(component.renderVals().historyRows[0].subject,'Tarea: Documentación');
     }
   });
   test(file + ' removes board columns without deleting tasks and preserves the choice after refresh', () => {
@@ -143,7 +167,7 @@ for (const file of ['gantt-demo.html','frontend/dist/modules/Gantt/gantt.html'])
     assert.equal(rendered.canDelete,true);
     assert.ok(!rendered.teamNames.includes('Silbana'));
     assert.deepEqual(Array.from(component.getScopedProjects(component.state),p=>p.id),[1,2]);
-    assert.deepEqual(Array.from(component.getOrgState(component.state).groups,g=>g.id),['datalab','pmo']);
+    assert.deepEqual(Array.from(component.getOrgState(component.state).groups,g=>g.id),['datalab','pmo','lideres']);
     component.setState = update => { component.state = {...component.state, ...(typeof update === 'function' ? update(component.state) : update)}; };
     component.persistData = () => {};
     component.update(1,{avance:100});

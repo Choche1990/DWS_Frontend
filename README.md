@@ -104,6 +104,7 @@ Conservar los nombres de responsables existentes al reorganizar roles: las asign
 
 **Alcance actual:** los filtros por equipo de la interfaz no constituyen aislamiento completo de datos en la API. El guardado del Gantt envía colecciones completas, y las API de lectura entregan ese estado a los perfiles con acceso al módulo. Hay controles adicionales por equipo para documentos e historial del jefe. No asumir permisos por fila para todas las operaciones.
 
+
 ## Datos y persistencia
 
 | Archivo local | Contenido |

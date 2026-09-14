@@ -6,8 +6,8 @@ const { readCSVFile, writeCSVFileAtomic } = require('../backend/csvStore');
 const { normalizeGroup, parseGroups } = require('../backend/teamScope');
 
 const PROFILES = [
-  { email:'bperezc@intercorp.com.pe', nombre:'Mauricio', rol:'jefe', grupo:'', gruposSupervisados:'datalab;pmo' },
-  { email:'pvallejoe@intercorp.com.pe', nombre:'Paolo', rol:'jefe', grupo:'', gruposSupervisados:'datalab;pmo;smartdesk' },
+  { email:'bperezc@intercorp.com.pe', nombre:'Mauricio', rol:'jefe', grupo:'lideres', gruposSupervisados:'datalab;pmo' },
+  { email:'pvallejoe@intercorp.com.pe', nombre:'Paolo', rol:'jefe', grupo:'lideres', gruposSupervisados:'datalab;pmo;smartdesk' },
   { email:'jgomezg@intercorp.com.pe', nombre:'Johannes', rol:'coordinador', grupo:'pmo', gruposSupervisados:'' },
   { email:'jmontesdeoca@intercorp.com.pe', nombre:'Jean Pierre', rol:'coordinador', grupo:'datalab', gruposSupervisados:'' },
   { email:'snovoam@intercorp.com.pe', nombre:'Silbana', rol:'analista', grupo:'smartdesk', gruposSupervisados:'' },

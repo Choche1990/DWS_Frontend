@@ -1034,7 +1034,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       isHistory:st.historyOpen, historyTitle:st.historyTitle||'Historial', historyLoading:st.historyLoading, historyError:st.historyError, historyEmpty:!st.historyLoading && !st.historyError && (st.historyRows||[]).length===0, closeHistory:()=>this.closeProjectHistory(),
       historyRows:(st.historyRows||[]).map(h=>({
         title:(h.action==='CREATE'?'Creación':h.action==='DELETE'?'Eliminación':h.field==='estado'?'Cambio de estado':'Cambio de fecha: '+({fechaSolicitud:'solicitud',inicio:'inicio',fin:'fin',finReal:'finalización real'}[h.field]||h.field||'fecha'))+' · '+(h.entityType==='project'?'Proyecto':h.entityType==='independent_task'?'Tarea independiente':'Tarea del proyecto'),
-        subject:(h.entityType==='project'?'Proyecto: ':'Tarea: ')+(h.entityName||(h.action==='CREATE'?h.newValue:h.action==='DELETE'?h.oldValue:'')||('ID '+h.entityId+' (nombre no registrado)'))+(h.entityNameSource==='current'?' (nombre actual)':'')+(h.entityType==='project_task'&&h.projectName?' · Proyecto: '+h.projectName:''),
+        subject:(h.entityType==='project'?'Proyecto: ':'Tarea: ')+(h.entityName||(h.action==='CREATE'?h.newValue:h.action==='DELETE'?h.oldValue:'')||('ID '+h.entityId+' (nombre no registrado)')),
         actor:(h.userName||h.userEmail||'Usuario')+' · '+(h.userRole||''),
         date:(()=>{try{return 'Registrado el: '+new Date(h.timestamp).toLocaleString('es-PE')}catch(e){return h.timestamp}})(),
         detail:h.action==='UPDATE'?('Antes: '+String(h.oldValue||'Sin valor')+' → Después: '+String(h.newValue||'Sin valor')):(h.newValue||h.oldValue||''),
@@ -1191,7 +1191,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const directory = user.directorio;
     const personGroups = directory ? directory.personGroups : Object.fromEntries(Object.entries(state.personGroups || {}).map(([n,g]) => [n,normalize(g)]));
     let groups = directory ? directory.groups : (state.groups || []).map(g => ({...g,id:normalize(g.id),name:normalize(g.id)==='pmo'?'PMO':g.name}));
-    if (user.rol === 'jefe') groups = groups.filter(g => (user.gruposSupervisados || []).includes(g.id));
+    if (user.rol === 'jefe') groups = groups.filter(g => (user.gruposSupervisados || []).includes(g.id) || (g.id === 'lideres' && Object.values(directory && directory.leaderScopes || {}).some(scope => scope.some(id => (user.gruposSupervisados || []).includes(id)))));
     const activeGroupId = normalize(state.activeGroupId) || null;
     return {...state, personGroups, groups, activeGroupId};
   }
@@ -1200,7 +1200,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!user || user.rol === 'admin' || user.rol === 'owner') return Object.keys(this.TEAM);
     if (user.rol === 'analista') return [user.nombre];
     const groups = user.rol === 'jefe' ? (user.gruposSupervisados || []) : [user.grupo === 'proyectos' ? 'pmo' : String(user.grupo || '').toLowerCase()];
-    return Object.keys(st.personGroups).filter(n => groups.includes(st.personGroups[n]));
+    return Object.keys(st.personGroups).filter(n => groups.includes(st.personGroups[n]) || (st.personGroups[n] === 'lideres' && (((user.directorio || {}).leaderScopes || {})[n] || []).some(g => groups.includes(g))));
   }
   getScopedProjects(state) {
     const user = state.currentUser;
@@ -1223,7 +1223,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     template = template.replace(/const roleIndependentTasks=st.kanbanTasks.filter\(t=>[\s\S]*?; const dashboardTaskAssignees=/, 'const roleIndependentTasks=st.kanbanTasks.filter(t=>this.getScopedPeople(st).includes(t.asignado)); const dashboardTaskAssignees=');
     template = template.replace('const st = this.state, q = st.query.trim().toLowerCase();', 'const st = this.getOrgState(this.state), q = st.query.trim().toLowerCase();');
     template = template.replace('      currentUserName:', "      isReadOnly:false, hasCentralDirectory:!!(st.currentUser && st.currentUser.directorio),\n      currentUserName:");
-    template = template.replace('const members = Object.keys(s.personGroups).filter(n => s.personGroups[n] === id);', 'const org = this.getOrgState(s); const members = Object.keys(org.personGroups).filter(n => org.personGroups[n] === id);');
+    template = template.replace('const members = Object.keys(s.personGroups).filter(n => s.personGroups[n] === id);', 'const org = this.getOrgState(s); const members = this.getScopedPeople(s).filter(n => org.personGroups[n] === id || ((((s.currentUser || {}).directorio || {}).leaderScopes || {})[n] || []).includes(id));');
     const renderAt = template.indexOf('  renderVals() {');
     if (renderAt < 0) throw new Error('role_scope_render_anchor_missing');
     template = template.slice(0, renderAt) + template.slice(renderAt).replaceAll('Object.keys(this.TEAM)', 'this.getScopedPeople(st)');
