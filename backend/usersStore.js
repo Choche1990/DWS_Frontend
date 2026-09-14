@@ -4,7 +4,7 @@
 const fs = require('fs');
 const path = require('path');
 const { readCSVFile } = require('./csvStore');
-const { normalizeGroup, parseGroups, buildDirectory } = require('./teamScope');
+const { membershipGroup, parseGroups, buildDirectory } = require('./teamScope');
 
 const DATA_DIR = path.join(__dirname, 'data');
 const USERS_CSV = path.join(DATA_DIR, 'users.csv');
@@ -38,7 +38,7 @@ function findUser(email, password) {
     email: row.email,
     nombre: row.nombre || '',
     rol: row.rol || '',
-    grupo: normalizeGroup(row.grupo),
+    grupo: membershipGroup(row),
     gruposSupervisados: parseGroups(row.gruposSupervisados),
     directorio: buildDirectory(rows),
     modulos: parseModulos(row.modulos, row.rol),

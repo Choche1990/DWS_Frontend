@@ -35,6 +35,22 @@ test('supervisors see the union of assigned teams; old group names remain compat
 });
 
 for (const file of ['gantt-demo.html','frontend/dist/modules/Gantt/gantt.html']) {
+  test(file + ' includes Patty in SmartDesk filters and task options with legacy server accounts', () => {
+    const patty = {email:'pazana@intercorp.com.pe',nombre:'Patty',rol:'jefe',grupo:'',gruposSupervisados:['smartdesk']};
+    const directorio = buildDirectory([patty]);
+    assert.equal(directorio.personGroups.Patty,'smartdesk');
+    assert.equal(buildDirectory([{...patty,grupo:'pmo'}]).personGroups.Patty,'pmo');
+    const {ComponentClass} = componentFromBundle(file);
+    for (const rol of ['jefe','coordinador','admin']) {
+      const component = new ComponentClass();
+      component.props = {};
+      component.state = {...component.state,currentUser:{email:rol+'@test',rol,grupo:'smartdesk',gruposSupervisados:['smartdesk'],directorio},projects:[],kanbanColumns:[],kanbanTasks:[]};
+      const rendered = component.renderVals();
+      assert.ok(rendered.asignadoMenu.options.some(option=>option.value==='Patty'));
+      assert.ok(rendered.teamNames.includes('Patty'));
+      assert.ok(rendered.addColumnOptions.some(option=>option.name==='Patty'));
+    }
+  });
   test(file + ' removes board columns without deleting tasks and preserves the choice after refresh', () => {
     const {ComponentClass,template} = componentFromBundle(file);
     assert.ok(template.includes('!col.canRemoveColumn'));

@@ -14,12 +14,19 @@ function normalizeGroup(value) {
 function parseGroups(value) {
   return [...new Set((Array.isArray(value) ? value : String(value || '').split(/[;,]/)).map(normalizeGroup).filter(Boolean))];
 }
+function membershipGroup(user) {
+  // Compatibility with deployed CSVs from before Patty's membership was added.
+  // An explicitly configured group always takes precedence.
+  return normalizeGroup(user.grupo) ||
+    (String(user.email || '').trim().toLowerCase() === 'pazana@intercorp.com.pe' ? 'smartdesk' : '');
+}
 function buildDirectory(users) {
   const personGroups = { ...DEFAULT_PERSON_GROUPS };
   for (const user of users) {
-    if (user.nombre && user.grupo) personGroups[user.nombre] = normalizeGroup(user.grupo);
+    const group = membershipGroup(user);
+    if (user.nombre && group) personGroups[user.nombre] = group;
     // A supervisor's scope is not their team's membership.
-    if (user.rol === 'jefe' && !user.grupo) delete personGroups[user.nombre];
+    if (user.rol === 'jefe' && !group) delete personGroups[user.nombre];
   }
   const ids = [...new Set([...Object.keys(GROUP_NAMES), ...Object.values(personGroups), ...users.flatMap(u => parseGroups(u.gruposSupervisados))])];
   return { personGroups, groups: ids.map(id => ({ id, name: GROUP_NAMES[id] || id })) };
@@ -32,4 +39,4 @@ function canViewAssignment(user, name) {
 }
 function scopeProjects(user, projects) { return projects.filter(p => canViewAssignment(user, p.asignado)); }
 function scopeTasks(user, tasks) { return tasks.filter(t => canViewAssignment(user, t.asignado)); }
-module.exports = { normalizeGroup, parseGroups, buildDirectory, isJefe, canViewAssignment, scopeProjects, scopeTasks };
+module.exports = { normalizeGroup, parseGroups, membershipGroup, buildDirectory, isJefe, canViewAssignment, scopeProjects, scopeTasks };
