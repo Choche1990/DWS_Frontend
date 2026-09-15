@@ -1,8 +1,31 @@
-<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Control de accesos | Digital Workspace</title>
-<style>body{font:15px system-ui;margin:32px;color:#173629;background:#f7faf9}main{max-width:1100px;margin:auto}table{border-collapse:collapse;width:100%;background:white}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}a{color:#007b45}button{padding:8px 16px;cursor:pointer}#summary{padding:20px;background:#e9f5ef;border-radius:10px;line-height:1.8}.scroll{overflow:auto}</style></head>
-<body><main><h1>Control de accesos</h1><a href="/">Volver a la plataforma</a> <button id="refresh">Actualizar</button><p id="summary" role="status">Cargando?</p><p>Conteos acumulados. Cada apertura o recarga del Gantt cuenta como una visita. Los usuarios distintos se cuentan por correo.</p><div class="scroll"><table><thead><tr><th>Fecha y hora local</th><th>Evento</th><th>Usuario</th></tr></thead><tbody id="events"></tbody></table></div></main><script src="/session-client.js"></script><script>
-const labels={LOGIN_SUCCESS:'Ingreso correcto',LOGIN_FAILED:'Intento fallido',LOGOUT:'Cierre de sesi?n',SESSION_EXPIRED:'Sesi?n vencida',GANTT_ENTER:'Entrada al Gantt'};
-async function refresh(){const summary=document.getElementById('summary');try{const r=await fetch('/api/access-history');if(!r.ok){summary.textContent=r.status===403?'Solo los administradores pueden consultar este registro.':'No se pudo consultar el registro.';return;}const d=await r.json();summary.textContent='Ingresos correctos: '+d.summary.successfulLogins+' ? Intentos fallidos: '+d.summary.failedLogins+' ? Visitas al Gantt: '+d.summary.ganttVisits+' ? Usuarios distintos en Gantt: '+d.summary.ganttUsers;const rows=document.getElementById('events');rows.replaceChildren();for(const e of d.events.reverse()){const tr=document.createElement('tr');for(const text of [new Date(e.timestamp).toLocaleString(),labels[e.event]||e.event,e.name?e.name+' ('+e.email+')':e.email]){const td=document.createElement('td');td.textContent=text;tr.append(td);}rows.append(tr);}}catch(_){summary.textContent='No se pudo conectar con el servidor. Vuelve a intentar.'}}
-document.getElementById('refresh').addEventListener('click',refresh);dwsSessionReady.then(refresh);
-</script></body></html>
+﻿<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control de accesos | Digital Workspace</title>
+<style>
+@font-face{font-family:Poppins;src:url('/modules/AutoatencionIA/_ds/interbank-design-system-cbbb9619-11cb-4023-b548-74a2714d07fe/assets/fonts/Poppins-Regular.ttf')}*{box-sizing:border-box}body{margin:0;font:14px Poppins,system-ui;color:#1a1a1a;background:#f2f2f2}header{background:white;border-bottom:1px solid #cfcfcf;padding:28px 40px;display:flex;justify-content:space-between;align-items:center;gap:20px}h1{font-size:28px;margin:0}h2{font-size:18px;margin:0 0 16px}p{color:#4a4a4a}header p{margin:6px 0 0}.badge{background:#e8f6ed;color:#005f1e;padding:8px 14px;border-radius:24px;white-space:nowrap}.layout{display:flex;min-height:calc(100vh - 120px)}aside{width:230px;flex-shrink:0;background:white;border-right:1px solid #cfcfcf;padding:24px 16px}aside a{display:block;padding:12px;color:#4a4a4a;text-decoration:none;border-radius:8px}aside a.active{background:#e8f6ed;color:#005f1e;font-weight:bold}main{padding:28px 40px;width:100%;min-width:0}.filters,.panel,.card{background:white;border:1px solid #dedede;border-radius:12px;padding:20px}.filters{display:flex;gap:16px;flex-wrap:wrap;align-items:end}label{display:flex;flex-direction:column;gap:6px;font-size:12px}input,select,button{font:inherit;border:1px solid #b3b3b3;border-radius:8px;padding:9px 12px;background:white;color:#1a1a1a}button{cursor:pointer}button.primary{background:#005f1e;color:white;border-color:#005f1e}button:disabled{opacity:.5;cursor:default}:focus-visible{outline:3px solid #0039a6;outline-offset:2px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:20px 0}.card strong{display:block;font-size:32px;color:#005f1e;margin-top:8px}.card span{color:#4a4a4a;font-size:12px}.panel{margin-top:20px}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;text-align:left}th,td{padding:13px 12px;border-bottom:1px solid #eee;font-size:12px}th{color:#4a4a4a;background:#fafafa}td small{display:block;color:#4a4a4a}.footer{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:16px}.bars{display:grid;gap:12px}.bar-label{display:flex;justify-content:space-between;font-size:12px}.track{height:9px;border-radius:8px;background:#edf0ee;margin-top:5px;overflow:hidden}.fill{height:100%;background:#008c37}#status{min-height:22px} @media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}aside{width:180px}main{padding:24px}}@media(max-width:650px){header{padding:20px;flex-wrap:wrap}h1{font-size:24px}.layout{display:block}aside{width:100%;border-right:0;padding:10px;display:flex;flex-wrap:wrap}main{padding:16px}.cards{gap:10px}.footer{flex-wrap:wrap}input,select{max-width:100%}}
+</style>
+</head>
+<body>
+<header><div><h1>Control de accesos</h1><p>Actividad de ingreso a Digital Workspace</p></div><span class="badge">Administradores · Solo lectura</span></header>
+<div class="layout"><aside aria-label="Navegación"><a class="active" href="/access-control.html" aria-current="page">Control de accesos</a><a href="/">Volver a la plataforma</a></aside>
+<main>
+<section class="filters" aria-label="Filtros de actividad">
+<label>Desde<input type="date" id="from"></label><label>Hasta<input type="date" id="to"></label>
+<label>Usuario<input type="search" id="search" placeholder="Nombre o correo"></label>
+<button id="reset">Restablecer filtros</button><button class="primary" id="refresh">Actualizar</button>
+</section>
+<p id="status" role="status" aria-live="polite">Cargando registros…</p>
+<div id="results" hidden>
+<section class="cards" aria-label="Indicadores del período">
+<div class="card">Ingresos correctos<strong id="success">0</strong><span>Inicio de sesión en la plataforma</span></div>
+<div class="card">Intentos fallidos<strong id="failed">0</strong><span>Credenciales rechazadas</span></div>
+<div class="card">Visitas al Gantt<strong id="visits">0</strong><span>Aperturas y recargas</span></div>
+<div class="card">Usuarios del Gantt<strong id="users">0</strong><span>Correos distintos con visitas</span></div>
+</section>
+<section class="panel"><h2>Actividad por evento</h2><div id="bars" class="bars"></div></section>
+<section class="panel"><h2>Historial de accesos</h2><p>Los indicadores y el historial corresponden a los filtros seleccionados. Horas en tu zona local. Cada apertura o recarga del Gantt cuenta como una visita; no mide tiempo de uso.</p><div class="scroll"><table><thead><tr><th>Fecha y hora local</th><th>Evento</th><th>Usuario</th></tr></thead><tbody id="events"></tbody></table></div><div class="footer"><span id="pageInfo"></span><div><button id="prev">Anterior</button> <button id="next">Siguiente</button></div></div></section>
+</div></main></div>
+<script src="/session-client.js"></script><script src="/access-control.js"></script>
+</body></html>

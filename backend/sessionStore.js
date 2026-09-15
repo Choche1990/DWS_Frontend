@@ -18,7 +18,7 @@ function createAuth({ authenticate = findUser, now = Date.now, logFile = path.jo
     let p;
     try { p = decodeURIComponent(new URL(req.url, 'http://localhost').pathname); }
     catch (_) { reply(res,400,{error:'invalid_path'}); return true; }
-    if(!p.startsWith('/api/')&&!p.startsWith('/modules/'))return false;
+    if(!p.startsWith('/api/')&&!p.startsWith('/modules/')&&p!=='/access-control.html')return false;
     res.setHeader('Cache-Control','no-store');
     if(!['GET','HEAD'].includes(req.method)) {
       const origin=req.headers.origin;
@@ -42,6 +42,11 @@ function createAuth({ authenticate = findUser, now = Date.now, logFile = path.jo
     const id=token(req); const session=sessions.get(id);
     if(!session){cookie(req,res,'');if(p.startsWith('/modules/')){res.writeHead(302,{Location:'/'});res.end();}else reply(res,401,{error:'session_required'});return true;}
     req.authUser=session.user;req.authActor={email:session.user.email,name:session.user.nombre,role:String(session.user.rol||'').trim().toLowerCase()};
+    if(p==='/access-control.html') {
+      if(req.authActor.role!=='admin'){reply(res,403,{error:'admin_required'});return true;}
+      if(!['GET','HEAD'].includes(req.method)){reply(res,405,{error:'method_not_allowed'});return true;}
+      return false;
+    }
     if(p==='/api/session'&&req.method==='GET'){reply(res,200,{user:session.user,expiresAt:Math.min(session.last+idleMs,session.created+maxMs)});return true;}
     if(p==='/api/session/activity'&&req.method==='POST'){session.last=now();reply(res,200,{ok:true});return true;}
     if(p==='/api/logout'&&req.method==='POST'){log('LOGOUT',session.user);sessions.delete(id);cookie(req,res,'');reply(res,200,{ok:true});return true;}
