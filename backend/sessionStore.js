@@ -8,7 +8,7 @@ function createAuth({ authenticate = findUser, now = Date.now, logFile = path.jo
   const cookieName = 'dws_session';
   function log(event, user = {}, extra = {}) {
     fs.mkdirSync(path.dirname(logFile), { recursive: true });
-    fs.appendFileSync(logFile, JSON.stringify({timestamp:new Date(now()).toISOString(), event, email:user.email||'', name:user.nombre||'', ...extra})+'\n');
+    fs.appendFileSync(logFile, JSON.stringify({timestamp:new Date(now()).toISOString(), event, email:user.email||'', name:user.nombre||'', group:user.grupo||'', module:event==='GANTT_ENTER'?'gantt':'platform', ...extra})+'\n');
   }
   function reply(res, status, data) { res.writeHead(status, {'Content-Type':'application/json; charset=utf-8', 'Cache-Control':'no-store'}); res.end(JSON.stringify(data)); }
   function cookie(req, res, value) { res.setHeader('Set-Cookie', cookieName+'='+value+'; HttpOnly; SameSite=Strict; Path=/'+(process.env.SESSION_COOKIE_SECURE==='true'||req.socket.encrypted?'; Secure':'')+(!value?'; Max-Age=0':'')); }

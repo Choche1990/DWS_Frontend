@@ -1,0 +1,21 @@
+:root { color-scheme: light; }
+:root.dark { color-scheme: dark; background: #080f15; }
+.dark body { background: #080f15; color: #e4edf1; }
+.dark header, .dark .filters, .dark .panel, .dark .card {
+  background: #101b23; border-color: #2b3a44;
+}
+.dark p, .dark .card span, .dark td small { color: #a6b7c3; }
+.dark .badge { background: #073626; color: #70e9aa; }
+.dark .card strong { color: #54e39b; }
+.dark input, .dark select, .dark button {
+  background: #14232d; color: #e4edf1; border-color: #526875;
+}
+.dark button.primary { background: #00c878; color: #032417; border-color: #00c878; }
+.dark th { background: #14232d; color: #bbccd6; }
+.dark th, .dark td { border-color: #2b3a44; }
+.dark tbody tr:hover { background: #162831; }
+.dark .track { background: #293d46; }
+.dark .fill, .dark .column { background: #00c878; }
+.dark .chart-button, .dark .day { background: transparent; }
+.dark .chart-button:hover, .dark .day:hover { background: #133b2e; }
+.dark :focus-visible { outline-color: #75baff; }
